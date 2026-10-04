@@ -1,0 +1,41 @@
+# =========================================================
+# ASTRA — Docker imajına GİRMEYECEKLER
+# v49: 'COPY . .' ile .env imaja gömülüyordu (KRİTİK güvenlik açığı).
+# İmajı paylaşan herkes API anahtarlarını görebilirdi.
+# =========================================================
+
+# ── SIRLAR (kesinlikle imaja girmemeli) ──
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+credentials.json
+
+# ── Python geçici ──
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+.pytest_cache/
+.mypy_cache/
+
+# ── Kullanıcı verisi / modeller (imaj şişirir + gizlilik) ──
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/*.json
+saved_models/*.pkl
+saved_models/**/*.pkl
+saved_models/*.keras
+logs/
+*.log
+
+# ── Geliştirme dosyaları (üretim imajında gereksiz) ──
+.git/
+.gitignore
+CHANGELOG_*.md
+tests/
+testleri_calistir.py
+*.png
+.astra_runner.sh

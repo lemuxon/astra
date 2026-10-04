@@ -1,0 +1,37 @@
+# ASTRA — Gereksinimler
+# v55: Tüm bağımlılıklara ÜST SINIR eklendi.
+# Neden: Sadece ">=" ile bir bağımlılığın yeni majör sürümü (örn. pandas 3.0)
+# kırıcı değişiklikle gelip botu üretimde, gece yarısı bir "pip install"
+# sonrasında çökertebilir. Üst sınır, yükseltmeyi BİLİNÇLİ bir karar yapar.
+# Yükseltirken: sınırı yükselt → testleri_calistir.py → paper modda doğrula.
+
+python-dotenv>=1.0.0,<2.0.0
+requests>=2.31.0,<3.0.0
+pandas>=2.0.0,<3.0.0
+numpy>=1.24.0,<3.0.0
+scikit-learn>=1.3.0,<2.0.0
+xgboost>=2.0.0,<4.0.0
+lightgbm>=4.0.0,<5.0.0
+optuna>=3.3.0,<5.0.0
+tensorflow>=2.13.0,<3.0.0
+matplotlib>=3.7.0,<4.0.0
+python-telegram-bot>=20.0,<23.0
+websocket-client>=1.6.0,<2.0.0
+scipy>=1.11.0,<2.0.0              # Cornish-Fisher VaR, istatistiksel testler
+
+# v11 yenilikleri
+prometheus-client>=0.17.0,<1.0.0  # Prometheus metrics
+redis>=5.0.0,<7.0.0               # Distributed queue + event bus
+psycopg2-binary>=2.9.0,<3.0.0     # PostgreSQL / TimescaleDB
+hmmlearn>=0.3.0,<1.0.0            # HMM volatility regime switching
+
+# Opsiyonel performans geliştirmeleri
+# numba>=0.57.0,<1.0.0            # JIT compilation (hız)
+# uvloop>=0.17.0,<1.0.0           # Async event loop (Linux)
+
+# v20 yenilikleri
+river>=0.21.0,<1.0.0              # Online learning (per-mum anlık model güncelleme)
+
+# v21 yenilikleri (opsiyonel — yüklü değilse devre dışı)
+stable-baselines3>=2.2.0,<3.0.0   # PPO/SAC RL ajanı
+gymnasium>=0.29.0,<2.0.0          # RL ortamı (stable-baselines3 ile birlikte)

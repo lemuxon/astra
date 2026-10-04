@@ -1,0 +1,128 @@
+# =========================================================
+# ASTRA — Git dışında tutulacaklar
+#
+# v49: .env sızıntısını önlemek için eklendi (kritik güvenlik)
+# 2026-10-05: GitHub öncesi denetimle YENİDEN YAZILDI.
+#
+# ⚠️ NEDEN YENİDEN YAZILDI — ÖLÇÜLEN BOŞLUK:
+#   Eski dosyada desenler `saved_models/*.pkl`, `data/*.db` gibi
+#   İÇİNDE "/" olan yollardı. Git'te içinde "/" geçen desen REPO
+#   KÖKÜNE SABİTLENİR; alt dizinlerdeki aynı dosyaları KAPSAMAZ.
+#
+#   Sonuç (ölçüldü): 17 adet `data/_yedek_*/` dizinindeki
+#   2188 .pkl + 36 .db dosyası, toplam ~4.5 GB, commit edilecekti.
+#   `data/orderbook/*.jsonl.gz` (172 MB) ve kökteki `st.json`
+#   (gerçek bakiye + açık pozisyonlar) da kapsam dışıydı.
+#
+# ➜ KURAL: dosya TÜRÜ için ÇIPLAK desen kullan (`*.pkl`), dizin için
+#   izin-listesi (`data/*` + `!data/*.py`). Böylece yeni bir alt dizin
+#   açıldığında sessizce sızmaz.
+# =========================================================
+
+# ── SIRLAR (ASLA paylaşılmamalı) ──
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.ppk
+*.p12
+*.pfx
+id_rsa*
+credentials.json
+secrets.json
+
+# ── Python ──
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+ENV/
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ── VERİ DİZİNLERİ — izin listesi ──
+# Dizini tümden dışla, YALNIZCA kaynak kodu geri al.
+# (data/ içinde 8 gerçek .py modülü var: database.py, market_data.py,
+#  binance_client.py, binance_futures_client.py, multi_exchange.py,
+#  db_manager.py, onchain_data.py, __init__.py)
+data/*
+!data/*.py
+saved_models/*
+!saved_models/*.py
+logs/
+models/*
+!models/*.py
+
+# ── MODEL DOSYALARI — her derinlikte ──
+*.pkl
+*.joblib
+*.keras
+*.h5
+*.onnx
+*.pt
+*.pth
+
+# ── VERİTABANLARI — her derinlikte ──
+# Gerçek işlem geçmişi, bakiye, pozisyon kayıtları.
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+*.db.*
+# `astra.db.stres_testi_yedek` gibi son ekli kopyalar da kapsansın
+
+# ── AKIŞ VERİSİ ve ARŞİVLER ──
+*.jsonl
+*.jsonl.gz
+*.ndjson
+*.gz
+*.tgz
+*.tar
+*.zip
+*.7z
+*.rar
+*.bak
+
+# ── ÇALIŞMA ZAMANI DURUMU ──
+# Gerçek bakiye, açık pozisyon, PnL içerir — kod değil.
+st.json
+position_state.json
+ab_test*.json
+4h_baslangic.json
+*_durum.json
+
+# ── GRAFİKLER / ÇIKTILAR ──
+*.png
+*.jpg
+*.jpeg
+*.svg
+*.pdf
+
+# ── ÇALIŞMA ZAMANI (makineye özgü) ──
+.astra_runner.sh
+_baslat_orderbook_ASIL.bat
+
+# ── IDE / OS / ARAÇLAR ──
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.claude/settings.local.json
+
+# ── TEST / ARAÇ ARTEFAKTLARI ──
+.coverage
+.coverage.*
+htmlcov/
+*.yedek

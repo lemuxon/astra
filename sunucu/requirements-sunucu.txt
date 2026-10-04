@@ -1,0 +1,36 @@
+# ASTRA — SUNUCU gereksinimleri
+#
+# Bu dosya, YERELDE ÇALIŞTIĞI DOĞRULANMIŞ ortamı birebir kopyalar.
+# Ölçümlerimiz (işlem tempsu, SL davranışı, model seçimi) bu ortamda alındı.
+#
+# ANA FARK: tensorflow YOK.
+#   Yerelde de kurulu değil ve bot sorunsuz çalışıyor
+#   (preflight: "Opsiyonel paketler Kapalı (bot çalışır): TFT modeli").
+#   ~600 MB + uzun derleme süresi tasarrufu. Sonradan istenirse eklenebilir.
+#
+# torch: SB3 (RL ajanı) için gerekli, ~2 GB. CPU sürümü kullanın:
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+# Bu dosyada torch YOK — ayrı komutla, CPU index'inden kurulur.
+# Aksi halde pip CUDA sürümünü çeker (~3 GB fazladan, sunucuda GPU yok).
+
+python-dotenv>=1.0.0,<2.0.0
+requests>=2.31.0,<3.0.0
+pandas>=2.0.0,<3.0.0
+numpy>=1.24.0,<3.0.0
+scikit-learn>=1.3.0,<2.0.0
+xgboost>=2.0.0,<4.0.0
+lightgbm>=4.0.0,<5.0.0
+optuna>=3.3.0,<5.0.0
+matplotlib>=3.7.0,<4.0.0
+python-telegram-bot>=20.0,<23.0
+websocket-client>=1.6.0,<2.0.0
+scipy>=1.11.0,<2.0.0
+prometheus-client>=0.17.0,<1.0.0
+redis>=5.0.0,<7.0.0
+psycopg2-binary>=2.9.0,<3.0.0
+hmmlearn>=0.3.0,<1.0.0
+river>=0.21.0,<1.0.0
+
+# RL ajanı — torch CPU kurulduktan SONRA
+stable-baselines3>=2.2.0,<3.0.0
+gymnasium>=0.29.0,<2.0.0

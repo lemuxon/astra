@@ -1,0 +1,78 @@
+# =========================================================
+# ASTRA — systemd servis birimi
+# Kurulum:  sudo cp sunucu/astra.service /etc/systemd/system/
+#           sudo systemctl daemon-reload
+#           sudo systemctl enable --now astra
+#
+# NEDEN systemd (Windows'taki çözümden farkı):
+#   engines/watchdog.py, 3 alarmdan sonra `os.kill(getpid(), SIGTERM)`
+#   çağırıyor ve yorumunda "systemd Restart=always kullandığı için process'i
+#   öldürmek yeterli" yazıyor. Windows'ta systemd olmadığı için zamanlanmış
+#   görev + baslat_bot.bat ile bir çözüm uydurulmuştu (10 dk'ya kadar veri
+#   kaybı). Burada mekanizma TASARLANDIĞI GİBİ çalışır: watchdog kendini
+#   öldürür, systemd 10 saniye içinde geri getirir.
+# =========================================================
+
+[Unit]
+Description=ASTRA Trading Bot (paper mode)
+Documentation=file:///opt/astra/DEVAM_NOTLARI.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=astra
+Group=astra
+WorkingDirectory=/opt/astra
+
+# Windows'ta cp1254 yüzünden test çalıştırıcısı çöküyordu; Linux'ta da
+# UTF-8'i açıkça zorlamak Türkçe log/emoji için güvenli.
+Environment=PYTHONIOENCODING=utf-8
+Environment=PYTHONUTF8=1
+Environment=PYTHONUNBUFFERED=1
+
+# .env dosyası buradan okunur. İZİN: chmod 600, sahibi astra.
+EnvironmentFile=/opt/astra/.env
+
+ExecStart=/opt/astra/venv/bin/python -X utf8 /opt/astra/main.py bot
+
+# ── Yeniden başlatma ────────────────────────────────────
+# Watchdog SIGTERM gönderdiğinde VE bot herhangi bir sebeple çıktığında
+# geri gelsin. StartLimit yok: 7/24 veri toplama için kesinti kabul edilemez.
+Restart=always
+RestartSec=10
+StartLimitIntervalSec=0
+
+# v57: `systemctl stop` SIGTERM gönderir, Python 143 ile çıkar. Bu tanım
+# olmadan systemd normal durdurmayı BAŞARISIZ sayıyor ve `is-active` sonradan
+# `failed` döndürüyor — 2026-08-25'te tam bu görüldü. Yanıltıcı; gerçek bir
+# arıza ile normal durdurma birbirinden ayrılamıyordu.
+SuccessExitStatus=143 SIGTERM
+
+# ── Kaynak/dayanıklılık ─────────────────────────────────
+# Model eğitimi (Optuna, RF/XGB) bellek yiyor; OOM killer botu seçmesin diye
+# hafif koruma. Sunucu RAM'ine göre ayarlayın.
+OOMScoreAdjust=-500
+
+# Uzun süren model eğitimi timeout'a takılmasın
+TimeoutStopSec=60
+
+# ── Güvenlik sıkılaştırma ───────────────────────────────
+# Bot yalnızca kendi dizinine yazar; sistemin geri kalanı salt-okunur.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/astra/data /opt/astra/logs /opt/astra/saved_models
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+# Loglar hem journald'a hem dosyaya gider (main.py kendi dosya handler'ını kurar)
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=astra
+
+[Install]
+WantedBy=multi-user.target
