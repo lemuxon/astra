@@ -1,174 +1,197 @@
 # ASTRA
 
-Binance USDⓈ-M futures için kaldıraçlı, otomatik işlem botu. Sinyal üretir,
-çok katmanlı bir veto zincirinden geçirir, borsada emir açar ve koruma
-emirlerini (SL/TP/trailing) borsada tutar.
+An automated leveraged trading bot for Binance USDⓈ-M futures. It generates
+signals, runs them through a multi-layer veto chain, places orders on the
+exchange, and keeps protective orders (stop-loss / take-profit / trailing) live
+on the exchange side.
 
-Python 3.10 · ~42.000 satır · 554 test / 54 dosya
+Python 3.10 · ~42,000 lines · 554 tests across 54 files
+
+🇹🇷 [Türkçe README](README.tr.md)
 
 ---
 
-## ⚠️ ÖNCE BUNU OKU — DÜRÜST DURUM
+## ⚠️ READ THIS FIRST — HONEST STATUS
 
-**Bu bot henüz kâr ettiğini kanıtlamadı.**
+**This bot has not been shown to be profitable.**
 
 | | |
 |---|---|
-| Çalışma modu | Binance **testnet** (test parası) |
-| Kapanmış paper işlem | 0 / 100 (hüküm için 100 gerekiyor) |
-| Ölçülen hipotez | **9 denendi, 9'u reddedildi** |
-| Edge (istatistiksel üstünlük) | **henüz bulunamadı** |
+| Current mode | Binance **testnet** (play money) |
+| Closed paper trades | 0 / 100 (100 required for a verdict) |
+| Hypotheses measured | **9 tested, 9 rejected** |
+| Statistical edge | **none found yet** |
 
-Boru hattı uçtan uca çalışıyor — sinyal → veto zinciri → borsada emir →
-SL/TP yerleşti. Bu doğrulandı. **Kârlılık doğrulanmadı.**
+The pipeline works end to end — signal → veto chain → order on the exchange →
+SL/TP placed. That part is verified. **Profitability is not.**
 
-`karar_kurali.py` 100 kapanmış işlem, beklenti > %0.10 ve t > 2.0 istiyor.
-Bu eşikler veri görülmeden yazıldı ve **değiştirilmez** — sonuca bakıp eşik
-oynatmak hükmü geçersiz kılar.
+`karar_kurali.py` requires 100 closed trades, expectancy > 0.10% and t > 2.0
+before declaring anything. Those thresholds were written *before* seeing data
+and are **not to be changed** — tuning a threshold after looking at the result
+invalidates the verdict.
 
-> **Gerçek parayla kullanma.** Ne bu kod ne de buradaki hiçbir şey yatırım
-> tavsiyesi değildir. Kaldıraçlı işlem sermayenin tamamını kaybettirebilir.
+> **Do not run this with real money.** Nothing here is financial advice.
+> Leveraged trading can lose your entire deposit. See [LICENSE](LICENSE).
+
+### Why publish something that doesn't work?
+
+Because the *measurement* is the interesting part. This repository documents
+roughly 100 root causes found and fixed — and most of them were not in the
+trading logic. They were in the layer that measures it: tests that could never
+fail, backups that looked complete but weren't, safety gates that existed but
+never closed, counters inflated 29×.
+
+If you have ever written a backtest that looked profitable, some of this may be
+useful to you.
 
 ---
 
-## Hızlı başlangıç
+## Quick start
 
 ```bash
 pip install -r requirements.txt
-cp .env.example .env     # kendi anahtarlarını gir (dosya git'e girmez)
-python testleri_calistir.py   # 554 test geçmeli
-python main.py bot            # trading döngüsü + Telegram
+cp .env.example .env          # add your own keys — this file is gitignored
+python testleri_calistir.py   # 554 tests should pass
+python main.py bot            # trading loop + Telegram
 ```
 
-Panel: `http://127.0.0.1:8080` (yalnızca localhost)
+Dashboard: `http://127.0.0.1:8080` (localhost only)
 
-### `.env` — zorunlu alanlar
+### Required `.env` values
 
-| değişken | ne işe yarar |
+| variable | purpose |
 |---|---|
-| `BINANCE_API_KEY` / `_SECRET` | borsa erişimi |
-| `FUTURES_BASE_URL` | **testnet** için `https://testnet.binancefuture.com` |
-| `LIVE_TRADING` | `false` = paper (yerel simülasyon), `true` = gerçek emir |
-| `BOT_TOKEN` / `CHAT_ID` | Telegram bildirimleri (opsiyonel) |
+| `BINANCE_API_KEY` / `_SECRET` | exchange access |
+| `FUTURES_BASE_URL` | `https://testnet.binancefuture.com` for **testnet** |
+| `LIVE_TRADING` | `false` = paper (local simulation), `true` = real orders |
+| `BOT_TOKEN` / `CHAT_ID` | Telegram notifications (optional) |
 
-⚠️ `LIVE_TRADING=true` + production URL = **gerçek para**. Testnet'te
-kalmak için URL'leri `testnet.*` bırak.
+⚠️ `LIVE_TRADING=true` **plus** a production URL means **real money**. Keep the
+URLs pointing at `testnet.*` unless you know exactly what you are doing.
 
 ---
 
-## Nasıl çalışıyor
+## How it works
 
 ```
-4h bar kapanır
+4h candle closes
       ↓
-coin_analiz()  ──  34 feature · ML modelleri · rejim tespiti (HMM)
+coin_analiz()  ──  34 features · ML ensemble · regime detection (HMM)
       ↓
-sinyal (ai_score, confidence, karar)
+signal (ai_score, confidence, decision)
       ↓
-┌─ VETO ZİNCİRİ ────────────────────────────────┐
-│  sinyal kalitesi (AI skor + güven, rejime göre)│
-│  kill switch · circuit breaker                 │
-│  çoklu borsa fiyat doğrulama                   │
-│  MTF cascade  (4h ↔ 1d çelişkisi)              │
-│  MTF hizalama (kaç zaman dilimi hemfikir)      │
-│  EdgeEngine                                     │
-│  strateji motoru (trend follow / mean revert)  │
-│  minimum R/R · geç giriş · yeniden giriş       │
-└────────────────────────────────────────────────┘
+┌─ VETO CHAIN ───────────────────────────────────┐
+│  signal quality (AI score + confidence, per regime)
+│  kill switch · circuit breaker                  │
+│  cross-exchange price validation                │
+│  MTF cascade   (4h vs 1d conflict)              │
+│  MTF alignment (how many timeframes agree)      │
+│  EdgeEngine                                      │
+│  strategy engine (trend-follow / mean-reversion)│
+│  minimum R/R · late entry · re-entry cooldown   │
+└─────────────────────────────────────────────────┘
       ↓
-emir  ──  market giriş + STOP_MARKET + TAKE_PROFIT_MARKET (Algo API)
+order  ──  market entry + STOP_MARKET + TAKE_PROFIT_MARKET (Algo API)
       ↓
-izleme  ──  SL/TP → tasfiye → zaman stop (24s = modelin etiket ufku)
+monitor  ──  SL/TP → liquidation → time stop (24h = the model's label horizon)
 ```
 
-### Dizinler
+### Layout
 
-| dizin | içerik |
+| directory | contents |
 |---|---|
-| `engines/` | işlem motoru, paper trading, veto zinciri, risk, model |
-| `core/` | göstergeler, sinyal skoru, rejim tespiti |
-| `data/` | Binance istemcileri, veritabanı, çoklu borsa |
-| `execution/` | emir yürütme, akıllı emir yönlendirme |
-| `strategy/` | strateji motoru, edge engine, rejim adaptörü |
-| `api/` | panel (tek endpoint, salt-okunur) |
-| `tests/` | 54 dosya, her biri bir kök nedeni koruyor |
-| `sunucu/` | VPS kurulum notları |
+| `engines/` | trade engine, paper trading, veto chain, risk, models |
+| `core/` | indicators, signal scoring, regime detection |
+| `data/` | Binance clients, database, multi-exchange validation |
+| `execution/` | order execution, smart routing |
+| `strategy/` | strategy engine, edge engine, regime adapter |
+| `api/` | dashboard (single read-only endpoint) |
+| `tests/` | 54 files — each one guards a specific root cause |
 
 ---
 
-## Değişmez kurallar
+## Rules that are not negotiable
 
-Bu kurallar acıyla öğrenildi; ihlal etmek ölçümü geçersiz kılar.
+These were learned the hard way. Breaking one invalidates the measurement.
 
-**1. Paper, canlıyı BİREBİR yansıtmalı (§5.3).**
-İki yol aynı veto zincirinden, aynı kaldıraçtan, aynı eşiklerden geçer.
-Ayrışırsa toplanan 100 işlem canlıyı temsil etmez ve hüküm anlamsızdır.
-Parametre değişirse eldeki veri geçersizdir → sayaç sıfırlanır.
+**1. Paper must mirror live exactly.**
+Both paths go through the same veto chain, the same leverage, the same
+thresholds. If they diverge, the 100 collected trades do not represent live
+behaviour and the verdict is meaningless. Change a parameter → the collected
+data is void → the counter resets.
 
-**2. "Bilmiyorum" ≠ "sorun yok" (fail-open deseni).**
-Bu kod tabanının ana hastalığıydı: `acik_pozisyonlar()` hata alınca `[]`
-("pozisyon yok") dönüyordu. Güvenlik-kritik çağrılar `strict=True` kullanır.
+**2. "I don't know" ≠ "nothing is wrong".**
+This was the codebase's main disease. `acik_pozisyonlar()` returned `[]` on
+error — meaning "no open positions". Safety-critical calls use `strict=True`
+so failures raise instead of silently reading as "all clear".
 
-**3. Yeşil test kanıt değildir.**
-Her veto testinin yanında bir **kontrol testi** olmalı — "hiçbir zaman izin
-verme" davranışı da veto testlerini geçer. Yeni muhafız yazınca korumayı
-kasten boz ve testin gerçekten kırmızıya döndüğünü gör.
+**3. A green test is not evidence.**
+Every veto test needs a **control test** beside it — a "never allow anything"
+bug also passes every veto test. When you add a guard, deliberately break the
+protection and confirm the test actually turns red.
 
-**4. Kaynak metni arayan test, davranışı kilitlemez.**
-`"fonksiyon_adi" in kaynak` araması import satırında da eşleşir; çağrıyı
-silen mutasyon yakalanmaz. Davranışsal test yaz.
+**4. Searching source text does not lock behaviour.**
+`"function_name" in source` also matches the import line, so a mutation that
+deletes the *call* goes undetected. This happened four times in one session.
+Write behavioural tests.
 
-**5. Sürüklenme ≠ edge.**
-Boğa piyasasında rastgele giriş bile pozitif beklenti verir. Doğru ölçü
-`P(TP) − taban oran`.
+**5. Drift ≠ edge.**
+In a bull sample, even random entries show positive expectancy. The correct
+measure is `P(take-profit) − base rate`.
 
 ---
 
-## Belgeler
+## Documentation
 
-| dosya | ne anlatır |
+| file | contents |
 |---|---|
-| **`DEVAM_NOTLARI.md`** | **asıl belge** — oturumlar arası tek hafıza, ~100 kök nedenin tespiti ve düzeltmesi, ölçümlerle |
-| `CANLI_GECIS_PROTOKOLU.md` | gerçek paraya geçiş koşulları |
-| `DENETIM_RAPORU_v55.md` | bağımsız denetim raporu |
-| `BINANCE_ALGO_EMIR_SEMASI.md` | koşullu emir API şeması (deneyerek çıkarıldı) |
-| `CHANGELOG_v*.md` | sürüm geçmişi |
+| **`DEVAM_NOTLARI.md`** | **the real document** (Turkish) — a working journal of every root cause found, with the measurement that found it |
+| `CANLI_GECIS_PROTOKOLU.md` | conditions for going to real money |
+| `DENETIM_RAPORU_v55.md` | independent audit report |
+| `BINANCE_ALGO_EMIR_SEMASI.md` | conditional-order API schema, derived experimentally |
+| `CHANGELOG_v*.md` | version history |
 
-Yeni bir oturuma başlarken: **`DEVAM_NOTLARI.md` §0'dan oku.** Hangi
-hipotezin neden reddedildiği orada yazılı; tekrar denemek zaman kaybı.
+Most internal documentation is in Turkish. The code, comments and this README
+are the best English entry points. Translation help is welcome.
 
 ---
 
-## Geliştirme
+## Development
 
 ```bash
-python testleri_calistir.py   # tüm paket (554 test)
-python kontrol_4h.py          # sağlık + tempo
-python kontrol_kapanis.py     # kapanış türü · fonlama · kaldıraç bütünlüğü
-python karar_kurali.py        # hüküm (100 işlem gerektirir)
+python testleri_calistir.py   # full suite (554 tests)
+python kontrol_4h.py          # health + trade tempo
+python kontrol_kapanis.py     # exit type · funding · leverage integrity
+python karar_kurali.py        # verdict (requires 100 closed trades)
 ```
 
-Yeni test eklerken: dosyayı `testleri_calistir.py` listesine **ekle** —
-listede olmayan dosya sessizce atlanır (`tests/test_kosucu_kapsami.py` bunu
-koruyor).
+When adding a test file, **register it in `testleri_calistir.py`** — unlisted
+files are silently skipped. `tests/test_kosucu_kapsami.py` guards this.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR.
 
 ---
 
-## Depoya girmeyenler
+## What is not in this repository
 
-`.gitignore` şunları dışarıda tutar: `.env` ve tüm sırlar, `data/` ve
-`saved_models/` içeriği (~8 GB model + veritabanı), `logs/`, order book
-akışı, yedek dizinleri, ve gerçek bakiye/pozisyon içeren çalışma zamanı
-durum dosyaları.
+`.gitignore` excludes `.env` and all secrets, the contents of `data/` and
+`saved_models/` (~8 GB of models and databases), `logs/`, order-book archives,
+backup directories, and runtime state files containing real balances and
+positions.
 
-Klonlayan biri `.env.example`'ı doldurup kendi verisini sıfırdan toplar.
+Clone it, fill in `.env.example`, and the bot collects its own data from
+scratch.
 
 ---
 
-## Durum ve açık soru
+## Current status
 
-Proje 2026-09 itibarıyla **duraklatıldı**. Son ölçümde paper 0 işlem açarken
-canlı yol 5 işlem açtı — iki yolun ayrışması ters yöne döndü ve sebebi henüz
-bulunmadı. Ayrıntı: `DEVAM_NOTLARI.md` §0.44.
+The project is **paused** as of September 2026. In the last measurement the
+paper path opened 0 trades while the live path opened 5 — the divergence
+between the two reversed direction and the cause has not been found yet.
 
-Devam ederken ilk üç adım `DEVAM_NOTLARI.md` §0.46'da yazılı.
+Details: `DEVAM_NOTLARI.md` §0.44. Resume steps: §0.46.
+
+This is a good first problem for a contributor: both paths receive the *same*
+`sonuc` object in `main.py`, so an early return exists somewhere in the paper
+path that the live path does not have.
