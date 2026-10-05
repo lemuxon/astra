@@ -2914,6 +2914,78 @@ sembol `encodeURIComponent` ile kaçırılıyor.
 
 ---
 
+## 0.48 GITHUB'A HAZIRLANDI — PUSH BEKLIYOR (2026-10-05)
+
+### DURUM
+
+```
+git deposu : KURULDU (main dali)
+commit     : 47ceab5 ilk commit · 30217ea README · dc21499 notlar
+dosya      : 211 · 2.46 MB   (8.3 GB'den indi)
+yazar      : lemuxon <lemuxon@users.noreply.github.com>  (YEREL ayar, global DEGIL)
+remote     : https://github.com/lemuxon/astra.git  (tanimli, HENUZ push EDILMEDI)
+hedef      : PRIVATE repo
+```
+
+**KALAN TEK ADIM (kullanici yapacak):** GitHub'da bos private repo ac →
+`git push -u origin main`. Credential Manager kurulu, tarayicidan giris
+yeterli — token gerekmiyor.
+
+> Push'u asistan YAPMAZ: makinede kimlik yok, kimlik girmek §4.4 ihlali.
+
+### GUVENLIK DENETIMI — BULUNAN VE DUZELTILENLER
+
+**EN CIDDISI:** `sunucu/PUTTY_ADIMLARI.md` satir 27/73/116'da Contabo
+sunucusunun GERCEK public IP'si + port 22 + root acikca yaziliydi. Belge
+ayrica parola ile root girisinin acik oldugunu anlatiyordu. Kardes dosya
+`KURULUM.md` dogru sekilde `<SUNUCU_IP>` kullaniyordu — tutarsizlik sadece
+o dosyadaydi. **Duzeltildi** (yedek: `/tmp/putty_yedek.md`).
+
+➜ **SUNUCU HALA AYAKTAYSA:** IP bir suredir o dosyada yaziliydi. Parola ile
+SSH girisini kapat (`PasswordAuthentication no`).
+
+**`.gitignore` yeniden yazildi. Kok neden tek ve ogretici:**
+Eski desenler `saved_models/*.pkl`, `data/*.db` gibi ICINDE "/" olan
+yollardi. Git'te icinde "/" gecen desen **repo kokune SABITLENIR**, alt
+dizinleri kapsamaz.
+
+Olculen sonuc — bunlar commit edilecekti:
+```
+data/_yedek_*/ altinda 2188 .pkl + 36 .db   ~4.5 GB
+data/orderbook/*.jsonl.gz                    172 MB
+st.json (kokte)      gercek bakiye + acik pozisyonlar
+astra_kurulum.tar.gz icinde astra.db-wal
+```
+➜ Cozum: dosya TURU icin ciplak desen (`*.pkl`), dizin icin izin listesi
+(`data/*` + `!data/*.py` — data/ icinde 8 gercek modul var).
+
+Ayrica temizlendi: `C:\Users\Casper` yollari (kod + notlar + .bat).
+
+### DOGRULANDI (iddia degil, olcum)
+
+- `git check-ignore` ile tek tek: `.env`, `st.json`, tarball, tum .db/.pkl/.gz
+- Commit edilecek 211 dosyada sir taramasi: Binance anahtar deseni **0**,
+  Telegram token **0**, ozel anahtar blogu **0**, e-posta **0**, public IP **0**
+- Testlerdeki `API_KEY`/`SECRET` atamalari `.env`'deki GERCEK degerlerle
+  karsilastirildi → hepsi sahte fikstur (`test_key`, `test_secret`)
+- Tam test paketi: **554 test, 0 basarisiz**
+
+⚠️ Ara kontrolde ".env'deki her uzun deger" aramasi YANLIS ALARM verdi —
+eslesenler `FUTURES_BASE_URL` (public Binance adresi) ve `DB_PATH`'ti.
+**Olcumun kendisi de olculmeli**; bu oturumun tekrar eden dersi.
+
+### README EKLENDI
+
+Giris DURUST durumla aciliyor: *"Bu bot henuz kar ettigini kanitlamadi —
+9 hipotez denendi, 9'u reddedildi, sayac 0/100."* Kaldirac riski uyarisi,
+veto zinciri akisi, dizin haritasi ve **"Degismez kurallar"** (§5.3 paper
+esitligi · fail-open · yesil test kanit degildir · metin aramasi davranisi
+kilitlemez · suruklenme ≠ edge) dahil.
+
+Tum sayisal iddialar olculerek yazildi.
+
+---
+
 ## 0.47 ✅ CMD PENCERESİ DURDURULDU — yetkisiz çözüm (2026-09-21)
 
 Kullanıcı üç kez bildirdi: *"hâlâ kendi kendine cmd açılıyor,
