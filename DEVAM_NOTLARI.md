@@ -6160,7 +6160,7 @@ yazılmalı ya da `tests/test_veri_tutarliligi.py` kullanılmalı).
 
 **Sürüm:** v58 · 76 kök neden düzeltildi (K-12..88) · 476 test / 43 dosya.
 
-🔴 **UZUN ARA VERİLDİ — §0.46 OKU** (makine durumu + dönünce ilk 3 adım), sonra §0.44 (açık soru)
+🔴 **§0.48 OKU** (GitHub durumu — push bekliyor), sonra §0.46 (makine) ve §0.44 (açık soru)
 
 **Bu oturumda (2026-09-13) yapılanlar — K-84..K-88:**
 - K-84 tempo ölçümü 12 kat yanlıştı (açılan işlem sayıyordu,
