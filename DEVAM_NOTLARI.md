@@ -2914,6 +2914,109 @@ sembol `encodeURIComponent` ile kaçırılıyor.
 
 ---
 
+## 0.51 ▶️ BOT YENİDEN BAŞLATILDI + K-108 TOKEN SIZINTISI (2026-10-06)
+
+Kullanıcı: *"botu tekrar başlat."*
+
+### BOT ÇALIŞIYOR
+
+```
+PID 11628 · 18:44:24 · ASTRA_Bot: Disabled → Ready → çalışıyor
+FAILOVER primary : testnet.binancefuture.com   (K-106 bozmadı)
+STATE SYNC       : tamamlandı, 0 aktif pozisyon
+HMM              : Convergence=True
+trades tablosu   : 0 kayıt → sayaç 0/100
+```
+
+⚠️ Eylülde açık kalan iki testnet pozisyonu (ADAUSDT, APTUSDT SHORT)
+**artık yok** — state sync 0 aktif pozisyon buldu.
+
+✅ `Enable-ScheduledTask` ATLANMADI (§2'nin 14 saatlik dersi).
+
+### 🔴 K-108 — TELEGRAM TOKEN'I LOGLARA DÜZ METİN YAZILIYORDU
+
+Bot başlarken Telegram 401 verdi ve **token'ı log'a bastı.** Ölçüldü —
+token 348 log satırında:
+
+```
+logs/astra.log         :  13 satır
+logs/astra_onemli.log  :  17 satır
+logs/bot_autostart.log : 318 satır
+```
+
+**İKİ ayrı sızma yolu:**
+
+| # | yer | nasıl |
+|---|---|---|
+| 1 | `core/telegram_gonderim.py` | `requests` istisnası URL'in tamamını yazar, URL'de token var |
+| 2 | `main.py:3456` | `InvalidToken` mesajı token'ı **ÇIPLAK** taşır + `exc_info=True` traceback |
+
+⚠️ **İLK DÜZELTMEM (2) YOLUNU KAÇIRIYORDU** — yalnızca URL desenine
+bakıyordu. Ölçmeden "düzelttim" diyecektim. Kendi düzeltmemi ölçmek
+ikinci yolu ortaya çıkardı.
+
+`SECURITY.md` bunu açıkça güvenlik kusuru sayıyor. Depo herkese açık;
+biri hata ayıklamak için log parçası paylaşırsa token'ı da paylaşır.
+
+### ÇÖZÜM — ÇIKTI ANINDA MASKELEME (`core/log_gizle.py`)
+
+İki yol buldum, **üçüncüsü olmadığını kanıtlayamam** (§5.1). Her
+`log.error(f"...{e}")` çağrısı aday. Bu yüzden tek tek yama değil:
+formatter seviyesinde, son metin diske yazılmadan önce maskeleniyor.
+
+⚠️ **Filter DEĞİL Formatter.** `record.exc_text` filtre çalıştığı anda
+henüz `None`; traceback metni formatlama sırasında üretilir. Filtreyle
+yapsaydık **traceback içindeki token kaçardı.** Test bu seçimi kilitliyor
+(`test_formatter_TRACEBACK_icindeki_tokeni_maskeler`).
+
+İki katman: (1) `.env` değerini değiştir, (2) desenleri yakala — token
+`.env`'dekinden farklı gelse bile sızmasın. `telegram_gonderim.py` yerel
+kopya tutmuyor; `test_maskeleme_TEK_KAYNAK` ayrışmayı yakalıyor.
+`main.py` maskeleme kurulamazsa CRITICAL basıyor — sessiz başarısızlık yok.
+
+### MUTASYON TESTİ
+
+```
+URL katmanı kaldırıldı      → ENV_DISI testi KIRMIZI  (2. katman gerekli)
+maskeleme tamamen kaldırıldı → 4 guard KIRMIZI
+kontrol testleri            → YEŞİL (401/InvalidToken/servis adı korunuyor)
+```
+
+⚠️ **Mutasyon ilk denemede UYGULANMADI ve `assert n == 1` yakaladı.**
+Sebep ortam: heredoc içindeki `\\` bash tarafından `\`'a indiriliyor,
+sonra Python'un ham olmayan dizgisi `\1`'i sekizlik kaçış (chr(1))
+sanıyor. **Bu ortamda heredoc'lu Python'da ters bölü kullanma — `chr(92)`
+ile kur.** Aynı hata dosyayı YAZARKEN de olmuş, dosyaya 0x01 yazılmıştı.
+
+⚠️ Bir regex'im geri izleme patlamasıyla asıldı (`(?:    .*\n|\n)*?`),
+süreç öldürüldü, dosya bütünlüğü `ast.parse` ile doğrulandı. Satır bazlı
+düzenleme regex'ten güvenli.
+
+### TESTLERDE KENDİ TUZAĞIMA DÜŞTÜM
+
+Maskeleme `log_gizle`'ye taşınınca testim **yanlış modülü** yamalıyordu
+(`tg.BOT_TOKEN`). Sessizce etkisiz kalıp gerçek `.env` değerini okuyacak,
+sonuç makineye bağlanacaktı. §4.1'in "yanlış sebeple geçen test" tuzağı.
+Düzeltildi; gerekçe test dosyasında yazılı.
+
+### KULLANICIDAN BEKLENEN
+
+1. **Token GEÇERSİZ** — Telegram "was rejected" diyor. @BotFather →
+   `/mybots` → Revoke → yeni değer `.env`'e. **Kullanıcı kendi girer.**
+2. Logları temizleme TEKLİF EDİLDİ, yapılmadı (log geçmişi ana teşhis
+   aracı; §v57).
+3. Çalışan bot ESKİ kodu yüklü → maskeleme yeniden başlatmayla devreye
+   girer. Token yenilenince TEK yeniden başlatma ikisini birden çözer.
+   O ana kadar her polling denemesi (artan geri çekilme) token'ı yazmaya
+   devam eder.
+
+### DURUM
+
+Tam paket: **56 paket · 581 test · 0 başarısız.** Açık soru §0.44
+değişmedi — bot çalışıyor, paper'ın işlem açıp açmadığı izlenecek.
+
+---
+
 ## 0.50 🔴 K-106 / K-107 — GÜVENLİ VARSAYILAN ve TEST ÇIKTISI (2026-10-06)
 
 Kullanıcı: *"testnet varsayılanını da düzelt."* (§0.49'da karar bekleyen bulgu)
@@ -6518,7 +6621,7 @@ yazılmalı ya da `tests/test_veri_tutarliligi.py` kullanılmalı).
 
 **Sürüm:** v58 · 76 kök neden düzeltildi (K-12..88) · 476 test / 43 dosya.
 
-🔴 **§0.50 OKU** (K-106 güvenli varsayılan + K-107), sonra §0.49 (proje PUBLIC), §0.46 (makine durumu) ve §0.44 (AÇIK SORU: paper 0 / canlı 5)
+🔴 **§0.51 OKU** (bot ÇALIŞIYOR + K-108 token sızıntısı; token YENİLENMELİ), sonra §0.50 (K-106/K-107), sonra §0.49 (proje PUBLIC), §0.46 (makine durumu) ve §0.44 (AÇIK SORU: paper 0 / canlı 5)
 
 **Bu oturumda (2026-09-13) yapılanlar — K-84..K-88:**
 - K-84 tempo ölçümü 12 kat yanlıştı (açılan işlem sayıyordu,
