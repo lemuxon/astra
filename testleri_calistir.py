@@ -5,6 +5,33 @@
 # =========================================================
 import sys, os, subprocess
 
+# K-105 (2026-10-06): v55 ALT SUREClerin kodlamasini duzeltti (asagida, env +
+# -X utf8) ama CALISTIRICININ KENDISINI atladi. Ayni hata sinifi, bir ust
+# katmanda.
+#
+# OLCULDU: cikti bir dosyaya/pipe'a yonlendirildiginde Python, Windows'ta
+# konsol kodlamasi yerine locale kodlamasini kullanir (Turkce: cp1254).
+# Ilk print'teki "█" karakteri UnicodeEncodeError atiyor ve calistirici
+# TEK TEST KOSMADAN coküyordu:
+#
+#   python testleri_calistir.py > sonuc.log
+#   UnicodeEncodeError: 'charmap' codec can't encode characters ... cp1254
+#
+# Yani README'nin ilk talimati, cikti yonlendiren herkeste (CI dahil)
+# calismiyordu. `baslat_bot.bat` bu korumayi zaten uyguluyor
+# (PYTHONIOENCODING/PYTHONUTF8) - eksik olan yalnizca bu dosyaydi.
+#
+# NOT (test eklenmedi, bilerek): bu kusur yalnizca UTF-8 OLMAYAN bir locale
+# altinda VE cikti yonlendirilmisken ortaya cikiyor. Linux/CI'da locale
+# genellikle UTF-8 oldugundan boyle bir test her zaman yesil kalirdi -
+# CONTRIBUTING.md'nin yasakladigi "kirmiziya donemeyen test" tam olarak bu.
+# Dogrulama bunun yerine olcumle yapildi (yukaridaki komut artik coküyor mu).
+for _akis in (sys.stdout, sys.stderr):
+    try:
+        _akis.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass   # eski Python veya stdout degistirilmis - en kotu durumda eski davranis
+
 KOK = os.path.dirname(os.path.abspath(__file__))
 
 def main():
