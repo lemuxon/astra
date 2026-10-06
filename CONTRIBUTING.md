@@ -26,7 +26,7 @@ anyone can check; "100 signals took 4.2s, now 1.1s, here's the command" is.
 ## Tests
 
 ```bash
-python testleri_calistir.py   # must print ✅ TÜM TESTLER BAŞARILI (568 tests)
+python testleri_calistir.py   # must print ✅ TÜM TESTLER BAŞARILI (581 tests)
 ```
 
 ### Every guard test needs a control test

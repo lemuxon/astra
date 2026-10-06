@@ -5,7 +5,7 @@ signals, runs them through a multi-layer veto chain, places orders on the
 exchange, and keeps protective orders (stop-loss / take-profit / trailing) live
 on the exchange side.
 
-Python 3.10 · ~42,000 lines · 568 tests across 55 files
+Python 3.10 · ~42,000 lines · 581 tests across 56 files
 
 🇹🇷 [Türkçe README](README.tr.md)
 
@@ -51,7 +51,7 @@ useful to you.
 ```bash
 pip install -r requirements.txt
 cp .env.example .env          # add your own keys — this file is gitignored
-python testleri_calistir.py   # 568 tests should pass
+python testleri_calistir.py   # 581 tests should pass
 python main.py bot            # trading loop + Telegram
 ```
 
@@ -112,7 +112,7 @@ monitor  ──  SL/TP → liquidation → time stop (24h = the model's label ho
 | `execution/` | order execution, smart routing |
 | `strategy/` | strategy engine, edge engine, regime adapter |
 | `api/` | dashboard (single read-only endpoint) |
-| `tests/` | 55 files — each one guards a specific root cause |
+| `tests/` | 56 files — each one guards a specific root cause |
 
 ---
 
@@ -166,7 +166,7 @@ are the best English entry points. Translation help is welcome.
 ## Development
 
 ```bash
-python testleri_calistir.py   # full suite (568 tests)
+python testleri_calistir.py   # full suite (581 tests)
 python kontrol_4h.py          # health + trade tempo
 python kontrol_kapanis.py     # exit type · funding · leverage integrity
 python karar_kurali.py        # verdict (requires 100 closed trades)

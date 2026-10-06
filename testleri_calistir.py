@@ -95,6 +95,7 @@ def main():
         "tests/test_reconciler_state.py",     # v58: reconciler orphan'ı state'e ekleyebilmeli (K-99)
         "tests/test_strateji_secimi.py",      # v58: MR ancak koşulu sağlanıyorsa seçilsin (K-102)
         "tests/test_guvenli_varsayilan_url.py",   # K-106: islem borsasi varsayilani testnet
+        "tests/test_token_maskeleme.py",          # K-108: token log'a dusmemeli
     ]
 
     toplam_basari = True

@@ -13,6 +13,7 @@
 # noktalarının hiçbiri değişmez.
 # =========================================================
 import os
+import re
 import time
 import logging
 import threading
@@ -25,6 +26,38 @@ log = logging.getLogger("ASTRA")
 
 TELEGRAM_URL   = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 TELEGRAM_PHOTO = f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto"
+
+
+# ── K-108 (2026-10-06): TOKEN LOG'A DÜŞÜYORDU ────────────────────────
+# ÖLÇÜLDÜ (2026-10-06 18:44, bot yeniden başlatılırken):
+#   `requests` istisnasının metni URL'in TAMAMINI içerir ve URL'de token
+#   var. `log.error(f"... {e}")` bunu düz metin olarak diske yazıyordu:
+#
+#     401 Client Error: Unauthorized for url:
+#     https://api.telegram.org/bot<TOKEN BURADA GÖRÜNÜYORDU>/sendMessage
+#
+#   4 log dosyasına yazılmış halde bulundu (astra.log, astra_onemli.log,
+#   bot_autostart.log×2).
+#
+# ⚠️ SECURITY.md bunu AÇIKÇA güvenlik kusuru olarak sayıyor:
+#   "Anything that could leak credentials (.env values, API keys,
+#    Telegram tokens) into logs, the dashboard, Telegram messages, or
+#    committed files". Depo artık herkese açık; biri hata ayıklamak için
+#   log parçası paylaşırsa token'ı da paylaşır.
+#
+# İKİ KATMANLI maskeleme BİLEREK:
+#   1) .env'deki değeri doğrudan değiştir (kesin eşleşme)
+#   2) URL desenini de yakala — token .env'dekinden FARKLI gelse bile
+#      (kopyala-yapıştır hatası, eski token, başka modülün değeri) sızmasın.
+#   Yalnızca (1) olsaydı "bilmediğim token sızmaz" varsayımı olurdu — §5.1.
+# TEK KAYNAK: desen listesi core/log_gizle.py'de tutuluyor. Burada yerel
+# kopya YOK -- iki yerde iki liste kacinilmaz olarak ayrisir ve ayrisan
+# kopya 'bir yerde maskelendi, otekinde sizdi' durumunu dogurur.
+#
+# OLCULDU (2026-10-06): buradaki yerel surum yalnizca URL bicimini
+# yakaliyordu; main.py:3456'daki InvalidToken mesaji token'i CIPLAK
+# tasiyor ve maskelenmiyordu. log_gizle.py iki bicimi de kapsar.
+from core.log_gizle import token_gizle as _gizle   # noqa: E402
 
 # ── Rate limiter durumu ──────────────────────────────────
 _tg_lock       = threading.Lock()
@@ -137,7 +170,7 @@ def telegram_gonder(mesaj, chat_id=CHAT_ID, tip="genel", force=False):
                               timeout=10)
             r.raise_for_status()
         except requests.exceptions.RequestException as e:
-            log.error(f"Telegram gönderme hatası (parça {i+1}/{len(parcalar)}): {e}")
+            log.error(f"Telegram gönderme hatası (parça {i+1}/{len(parcalar)}): {_gizle(e)}")
             tum_basarili = False
     # v58 (K-44): BAŞARILI GÖNDERİM DE LOGLANIR.
     # Öncesinde yalnızca hata ve rate-limit (debug) yazılıyordu; başarı
@@ -175,4 +208,4 @@ def telegram_grafik_gonder(yol, baslik="", chat_id=CHAT_ID):
                  f"({os.path.getsize(yol)//1024} KB) — {baslik[:60]}")
         return True
     except requests.exceptions.RequestException as e:
-        log.error(f"Grafik gönderme hatası: {e}"); return False
+        log.error(f"Grafik gönderme hatası: {_gizle(e)}"); return False

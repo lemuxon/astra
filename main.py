@@ -151,6 +151,18 @@ _onemli.setFormatter(logging.Formatter(
     "%(asctime)s [%(levelname)s] %(message)s"))
 logging.getLogger().addHandler(_onemli)
 
+# ── K-108: TOKEN LOG'A DÜŞMESİN ───────────────────────────────────────
+# ÖLÇÜLDÜ (2026-10-06): Telegram token'ı 4 log dosyasına düz metin yazılmış
+# bulundu, İKİ ayrı yoldan (telegram_gonderim.py'deki requests istisnası ve
+# main.py:3456'daki InvalidToken + exc_info traceback'i).
+# Tek tek yama yerine ÇIKTI ANINDA maskeleniyor: üçüncü bir sızma yolu
+# olmadığını kanıtlayamam (§5.1). Ayrıntı: core/log_gizle.py
+from core.log_gizle import kur as _gizlemeyi_kur
+_gizlenen = _gizlemeyi_kur()
+if not _gizlenen:
+    logging.getLogger("ASTRA").critical(
+        "[GUVENLIK] Log maskeleme KURULAMADI — token log'a sizabilir!")
+
 log = logging.getLogger("ASTRA")
 
 # ── v58 (K-40): TELEGRAM RAPOR/GRAFİK EŞİĞİ ────────────────────────

@@ -4,7 +4,7 @@ Binance USDⓈ-M futures için kaldıraçlı, otomatik işlem botu. Sinyal üret
 çok katmanlı bir veto zincirinden geçirir, borsada emir açar ve koruma
 emirlerini (SL/TP/trailing) borsada tutar.
 
-Python 3.10 · ~42.000 satır · 568 test / 55 dosya
+Python 3.10 · ~42.000 satır · 581 test / 56 dosya
 
 🇬🇧 [English README](README.md) — ana belge
 
@@ -38,7 +38,7 @@ oynatmak hükmü geçersiz kılar.
 ```bash
 pip install -r requirements.txt
 cp .env.example .env     # kendi anahtarlarını gir (dosya git'e girmez)
-python testleri_calistir.py   # 568 test geçmeli
+python testleri_calistir.py   # 581 test geçmeli
 python main.py bot            # trading döngüsü + Telegram
 ```
 
@@ -99,7 +99,7 @@ izleme  ──  SL/TP → tasfiye → zaman stop (24s = modelin etiket ufku)
 | `execution/` | emir yürütme, akıllı emir yönlendirme |
 | `strategy/` | strateji motoru, edge engine, rejim adaptörü |
 | `api/` | panel (tek endpoint, salt-okunur) |
-| `tests/` | 55 dosya, her biri bir kök nedeni koruyor |
+| `tests/` | 56 dosya, her biri bir kök nedeni koruyor |
 | `sunucu/` | VPS kurulum notları |
 
 ---
@@ -150,7 +150,7 @@ hipotezin neden reddedildiği orada yazılı; tekrar denemek zaman kaybı.
 ## Geliştirme
 
 ```bash
-python testleri_calistir.py   # tüm paket (568 test)
+python testleri_calistir.py   # tüm paket (581 test)
 python kontrol_4h.py          # sağlık + tempo
 python kontrol_kapanis.py     # kapanış türü · fonlama · kaldıraç bütünlüğü
 python karar_kurali.py        # hüküm (100 işlem gerektirir)
