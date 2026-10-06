@@ -2914,6 +2914,82 @@ sembol `encodeURIComponent` ile kaçırılıyor.
 
 ---
 
+## 0.49 🟢 PROJE HERKESE AÇIK — github.com/lemuxon/astra (2026-10-06)
+
+Kullanıcı: *"Projemi herkese açıp insanların geliştirmesini istiyorum."*
+Önce MIT + İngilizce README hazırlandı (dc1c8a8), sonra public'e çevrildi.
+
+### Yapılanlar
+
+| # | iş | sonuç |
+|---|---|---|
+| 1 | Görünürlük | public — anonim `curl` HTTP 200 |
+| 2 | Lisans | MIT (`spdx_id: MIT`) |
+| 3 | Açıklama + 8 topic | eklendi |
+| 4 | Private vulnerability reporting | açıldı |
+| 5 | İlk issue | #1 — paper 0 / canlı 5 (§0.44), `good first issue` |
+
+### ⚠️ K-104 — LICENSE'A EK METİN LİSANS TANIMAYI BOZUYOR
+
+`LICENSE` dosyasının sonuna "ADDITIONAL NOTICE — FINANCIAL RISK"
+bölümü eklemiştim. GitHub'ın tanıyıcısı (licensee) dosyanın bilinen
+bir lisans metnine birebir uymasını ister:
+
+```
+gh api repos/lemuxon/astra --jq .license.spdx_id
+→ NOASSERTION          # MIT DEĞİL
+```
+
+Repo kenar çubuğunda "MIT" etiketi çıkmıyordu — katkı verecek birinin
+kodu kullanıp kullanamayacağına baktığı ilk yer orası.
+
+➤ **Düzeltme (c85cd06):** `LICENSE` saf MIT (21 satır). Risk uyarısı
+`DISCLAIMER.md`'ye taşındı ve genişletildi. Doğrulama: `spdx_id: MIT`.
+
+➤ **DERS:** bu da §10'un deseni — dosyayı yazdım ve *yazdığımın
+algılandığını* varsaydım. Ölçmesem "MIT yaptım" diye bilecektim.
+Her dışa dönük değişiklikte **dışarıdan** doğrula (anonim `curl`,
+`gh api`), kendi dosyana bakarak değil.
+
+### GÜVENLİK DENETİMİ (public'e çevirmeden önce, ölçüldü)
+
+```
+IP adresi (takip edilen dosyalar) : yok — <SUNUCU_IP> placeholder
+Telegram token / Binance anahtar  : yok
+.env / .db / .pkl — TÜM geçmiş    : hiç commit edilmemiş
+.env.example                      : tüm sır alanları boş
+Kişisel Windows yolu              : 1 geçiş (temizlendi diyen notun kendisi)
+anonim raw .env isteği            : HTTP 404
+```
+
+⚠️ **Yanlış alarm ürettim:** `^\.env` grep deseni `.env.example`'ı da
+yakaladı ve "SIZINTI VAR" dedim. Gerçek değildi. Desen `(^|/)\.env$`
+olmalı. Üçüncü kez aynı hata sınıfı: fazla geniş desenle ölçüp
+sonucu olduğu gibi rapor etmek.
+
+### MAKİNE DURUMU
+
+Değişmedi: `ASTRA_Bot` **Disabled** · `ASTRA_OrderBook` yeniden
+adlandırılmış (eksik) `.bat`'i gösteriyor · testnet'te iki pozisyon
+açık kalmış olabilir (ADAUSDT, APTUSDT SHORT). Ayrıntı: §0.46.
+
+**Yeni:** `gh` CLI kuruldu (v2.102.0, `C:\Program Files\GitHub CLI\`),
+`lemuxon` olarak bağlı (keyring; scope: repo, gist, read:org, workflow).
+
+⚠️ Bu oturumda Chrome eklentisi **ve** terminal paneli entegrasyonu
+çalışmıyordu (`claude-desktop.ps1` bulunamadı). Cihaz kodu akışını arka
+planda çalıştırınca sayaç hemen başlıyor ve kullanıcı yetişemeden
+doluyor ("context deadline exceeded" — iki kod boşa gitti). Çalışan
+çözüm: `gh`'ı **gerçek konsol penceresinde** aç (`Start-Process cmd /k`),
+böylece sayaç kullanıcı Enter'a basınca başlıyor.
+
+### AÇIK SORU DEĞİŞMEDİ
+
+§0.44 hâlâ çözülmedi: **paper 0 açarken canlı 5 açtı.** Artık bu soru
+issue #1 olarak dış dünyaya da açık. **Ölçmeden düzeltme.**
+
+---
+
 ## 0.48 GITHUB'A HAZIRLANDI — PUSH BEKLIYOR (2026-10-05)
 
 ### DURUM
@@ -6232,7 +6308,7 @@ yazılmalı ya da `tests/test_veri_tutarliligi.py` kullanılmalı).
 
 **Sürüm:** v58 · 76 kök neden düzeltildi (K-12..88) · 476 test / 43 dosya.
 
-🔴 **§0.48 OKU** (GitHub durumu — push bekliyor), sonra §0.46 (makine) ve §0.44 (açık soru)
+🔴 **§0.49 OKU** (proje PUBLIC — github.com/lemuxon/astra, K-104), sonra §0.46 (makine) ve §0.44 (açık soru)
 
 **Bu oturumda (2026-09-13) yapılanlar — K-84..K-88:**
 - K-84 tempo ölçümü 12 kat yanlıştı (açılan işlem sayıyordu,
