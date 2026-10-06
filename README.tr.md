@@ -4,7 +4,9 @@ Binance USDⓈ-M futures için kaldıraçlı, otomatik işlem botu. Sinyal üret
 çok katmanlı bir veto zincirinden geçirir, borsada emir açar ve koruma
 emirlerini (SL/TP/trailing) borsada tutar.
 
-Python 3.10 · ~42.000 satır · 554 test / 54 dosya
+Python 3.10 · ~42.000 satır · 560 test / 54 dosya
+
+🇬🇧 [English README](README.md) — ana belge
 
 ---
 
@@ -36,7 +38,7 @@ oynatmak hükmü geçersiz kılar.
 ```bash
 pip install -r requirements.txt
 cp .env.example .env     # kendi anahtarlarını gir (dosya git'e girmez)
-python testleri_calistir.py   # 554 test geçmeli
+python testleri_calistir.py   # 560 test geçmeli
 python main.py bot            # trading döngüsü + Telegram
 ```
 
@@ -142,7 +144,7 @@ hipotezin neden reddedildiği orada yazılı; tekrar denemek zaman kaybı.
 ## Geliştirme
 
 ```bash
-python testleri_calistir.py   # tüm paket (554 test)
+python testleri_calistir.py   # tüm paket (560 test)
 python kontrol_4h.py          # sağlık + tempo
 python kontrol_kapanis.py     # kapanış türü · fonlama · kaldıraç bütünlüğü
 python karar_kurali.py        # hüküm (100 işlem gerektirir)
@@ -172,3 +174,14 @@ canlı yol 5 işlem açtı — iki yolun ayrışması ters yöne döndü ve sebe
 bulunmadı. Ayrıntı: `DEVAM_NOTLARI.md` §0.44.
 
 Devam ederken ilk üç adım `DEVAM_NOTLARI.md` §0.46'da yazılı.
+
+---
+
+## Katkı, güvenlik, risk
+
+| belge | içerik |
+|---|---|
+| [CONTRIBUTING.md](CONTRIBUTING.md) | katkı kuralları — ölçmeden değiştirme, kontrol testi, paper↔canlı eşitliği |
+| [SECURITY.md](SECURITY.md) | güvenlik açığı bildirimi (public issue AÇMA) |
+| [DISCLAIMER.md](DISCLAIMER.md) | finansal risk — çalıştırmadan önce oku |
+| [LICENSE](LICENSE) | MIT |

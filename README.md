@@ -5,7 +5,7 @@ signals, runs them through a multi-layer veto chain, places orders on the
 exchange, and keeps protective orders (stop-loss / take-profit / trailing) live
 on the exchange side.
 
-Python 3.10 · ~42,000 lines · 554 tests across 54 files
+Python 3.10 · ~42,000 lines · 560 tests across 54 files
 
 🇹🇷 [Türkçe README](README.tr.md)
 
@@ -51,7 +51,7 @@ useful to you.
 ```bash
 pip install -r requirements.txt
 cp .env.example .env          # add your own keys — this file is gitignored
-python testleri_calistir.py   # 554 tests should pass
+python testleri_calistir.py   # 560 tests should pass
 python main.py bot            # trading loop + Telegram
 ```
 
@@ -160,7 +160,7 @@ are the best English entry points. Translation help is welcome.
 ## Development
 
 ```bash
-python testleri_calistir.py   # full suite (554 tests)
+python testleri_calistir.py   # full suite (560 tests)
 python kontrol_4h.py          # health + trade tempo
 python kontrol_kapanis.py     # exit type · funding · leverage integrity
 python karar_kurali.py        # verdict (requires 100 closed trades)
@@ -169,7 +169,11 @@ python karar_kurali.py        # verdict (requires 100 closed trades)
 When adding a test file, **register it in `testleri_calistir.py`** — unlisted
 files are silently skipped. `tests/test_kosucu_kapsami.py` guards this.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR.
+See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR, and
+[SECURITY.md](SECURITY.md) for anything sensitive — please do not open a
+public issue for a security problem.
+
+Licensed under the [MIT License](LICENSE).
 
 ---
 
