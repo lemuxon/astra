@@ -4,7 +4,7 @@ Binance USDⓈ-M futures için kaldıraçlı, otomatik işlem botu. Sinyal üret
 çok katmanlı bir veto zincirinden geçirir, borsada emir açar ve koruma
 emirlerini (SL/TP/trailing) borsada tutar.
 
-Python 3.10 · ~42.000 satır · 560 test / 54 dosya
+Python 3.10 · ~42.000 satır · 568 test / 55 dosya
 
 🇬🇧 [English README](README.md) — ana belge
 
@@ -38,7 +38,7 @@ oynatmak hükmü geçersiz kılar.
 ```bash
 pip install -r requirements.txt
 cp .env.example .env     # kendi anahtarlarını gir (dosya git'e girmez)
-python testleri_calistir.py   # 560 test geçmeli
+python testleri_calistir.py   # 568 test geçmeli
 python main.py bot            # trading döngüsü + Telegram
 ```
 
@@ -49,12 +49,18 @@ Panel: `http://127.0.0.1:8080` (yalnızca localhost)
 | değişken | ne işe yarar |
 |---|---|
 | `BINANCE_API_KEY` / `_SECRET` | borsa erişimi |
-| `FUTURES_BASE_URL` | **testnet** için `https://testnet.binancefuture.com` |
+| `FUTURES_BASE_URL` | işlem/emir adresi — **boş bırakılırsa varsayılan testnet** |
 | `LIVE_TRADING` | `false` = paper (yerel simülasyon), `true` = gerçek emir |
 | `BOT_TOKEN` / `CHAT_ID` | Telegram bildirimleri (opsiyonel) |
 
-⚠️ `LIVE_TRADING=true` + production URL = **gerçek para**. Testnet'te
-kalmak için URL'leri `testnet.*` bırak.
+⚠️ **Gerçek para için İKİ bilinçli adım gerekir** ve ikisi de varsayılan değil:
+`LIVE_TRADING=true` **ve** `FUTURES_BASE_URL=https://fapi.binance.com`.
+Birini atlarsan testnettesin. Yazılmamış bir `FUTURES_BASE_URL` üretime
+değil TESTNET'e düşer — belirtilmemiş değer güvenli tarafa düşmelidir (K-106).
+
+Piyasa verisi bundan etkilenmez: klines ve ticker her zaman gerçek borsadan
+okunur (`BINANCE_DATA_URL`), çünkü testnetin ince likiditesi gerçek piyasada
+hiç var olmamış fiyatlar üretiyor (K-15).
 
 ---
 
@@ -93,7 +99,7 @@ izleme  ──  SL/TP → tasfiye → zaman stop (24s = modelin etiket ufku)
 | `execution/` | emir yürütme, akıllı emir yönlendirme |
 | `strategy/` | strateji motoru, edge engine, rejim adaptörü |
 | `api/` | panel (tek endpoint, salt-okunur) |
-| `tests/` | 54 dosya, her biri bir kök nedeni koruyor |
+| `tests/` | 55 dosya, her biri bir kök nedeni koruyor |
 | `sunucu/` | VPS kurulum notları |
 
 ---
@@ -144,7 +150,7 @@ hipotezin neden reddedildiği orada yazılı; tekrar denemek zaman kaybı.
 ## Geliştirme
 
 ```bash
-python testleri_calistir.py   # tüm paket (560 test)
+python testleri_calistir.py   # tüm paket (568 test)
 python kontrol_4h.py          # sağlık + tempo
 python kontrol_kapanis.py     # kapanış türü · fonlama · kaldıraç bütünlüğü
 python karar_kurali.py        # hüküm (100 işlem gerektirir)

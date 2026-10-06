@@ -5,7 +5,7 @@ signals, runs them through a multi-layer veto chain, places orders on the
 exchange, and keeps protective orders (stop-loss / take-profit / trailing) live
 on the exchange side.
 
-Python 3.10 · ~42,000 lines · 560 tests across 54 files
+Python 3.10 · ~42,000 lines · 568 tests across 55 files
 
 🇹🇷 [Türkçe README](README.tr.md)
 
@@ -51,7 +51,7 @@ useful to you.
 ```bash
 pip install -r requirements.txt
 cp .env.example .env          # add your own keys — this file is gitignored
-python testleri_calistir.py   # 560 tests should pass
+python testleri_calistir.py   # 568 tests should pass
 python main.py bot            # trading loop + Telegram
 ```
 
@@ -62,12 +62,18 @@ Dashboard: `http://127.0.0.1:8080` (localhost only)
 | variable | purpose |
 |---|---|
 | `BINANCE_API_KEY` / `_SECRET` | exchange access |
-| `FUTURES_BASE_URL` | `https://testnet.binancefuture.com` for **testnet** |
+| `FUTURES_BASE_URL` | trading endpoint — **defaults to testnet** if unset |
 | `LIVE_TRADING` | `false` = paper (local simulation), `true` = real orders |
 | `BOT_TOKEN` / `CHAT_ID` | Telegram notifications (optional) |
 
-⚠️ `LIVE_TRADING=true` **plus** a production URL means **real money**. Keep the
-URLs pointing at `testnet.*` unless you know exactly what you are doing.
+⚠️ **Real money requires two deliberate steps**, and neither is the default:
+`LIVE_TRADING=true` **and** `FUTURES_BASE_URL=https://fapi.binance.com`.
+Omit either one and you are on testnet. An unset `FUTURES_BASE_URL` resolves to
+testnet, not production — an absent value must fail safe.
+
+Market data is unaffected by this: klines and tickers are always read from the
+real exchange (`BINANCE_DATA_URL`), because testnet's thin liquidity produces
+prices that never existed on the real market.
 
 ---
 
@@ -106,7 +112,7 @@ monitor  ──  SL/TP → liquidation → time stop (24h = the model's label ho
 | `execution/` | order execution, smart routing |
 | `strategy/` | strategy engine, edge engine, regime adapter |
 | `api/` | dashboard (single read-only endpoint) |
-| `tests/` | 54 files — each one guards a specific root cause |
+| `tests/` | 55 files — each one guards a specific root cause |
 
 ---
 
@@ -160,7 +166,7 @@ are the best English entry points. Translation help is welcome.
 ## Development
 
 ```bash
-python testleri_calistir.py   # full suite (560 tests)
+python testleri_calistir.py   # full suite (568 tests)
 python kontrol_4h.py          # health + trade tempo
 python kontrol_kapanis.py     # exit type · funding · leverage integrity
 python karar_kurali.py        # verdict (requires 100 closed trades)

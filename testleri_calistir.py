@@ -94,6 +94,7 @@ def main():
         "tests/test_veto_zinciri_ortak.py",   # v58: veto zinciri paper↔canlı ortak (K-97)
         "tests/test_reconciler_state.py",     # v58: reconciler orphan'ı state'e ekleyebilmeli (K-99)
         "tests/test_strateji_secimi.py",      # v58: MR ancak koşulu sağlanıyorsa seçilsin (K-102)
+        "tests/test_guvenli_varsayilan_url.py",   # K-106: islem borsasi varsayilani testnet
     ]
 
     toplam_basari = True

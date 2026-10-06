@@ -17,7 +17,30 @@ CHAT_ID   = os.getenv("CHAT_ID", "")
 BINANCE_API_KEY    = os.getenv("BINANCE_API_KEY", "")
 BINANCE_API_SECRET = os.getenv("BINANCE_API_SECRET", "")
 BINANCE_BASE_URL   = os.getenv("BINANCE_BASE_URL", "https://api.binance.com")
-FUTURES_BASE_URL   = os.getenv("FUTURES_BASE_URL", "https://fapi.binance.com")
+# ⚠️ K-106 (2026-10-06): VARSAYILAN TESTNET — ÜRETİM DEĞİL.
+#
+# NEDEN DEĞİŞTİ: eskiden varsayılan "https://fapi.binance.com" idi.
+# Depo herkese açıldığında (2026-10-06) temiz kurulumda ölçüldü:
+#
+#     .env yok            → FUTURES_BASE_URL = fapi.binance.com  (ÜRETİM)
+#     LIVE_TRADING yok    → False  (emir açılmaz, tek koruma buydu)
+#
+# Tehlikeli senaryo: depoyu klonlayan biri kendi `.env`'ini yazar,
+# anahtarlarını ve LIVE_TRADING=true koyar, bu satırı yazmayı atlar
+# → GERÇEK PARA. `.env.example`'ı kopyalayan güvendeydi (orada testnet
+# yazıyor), kendi dosyasını yazan değildi.
+#
+# Bu §5.1'in ihlaliydi: "bilmiyorum" ≠ "sorun yok". Belirtilmemiş bir
+# değer GÜVENLİ tarafa düşmeli. Asimetri açık — yanlış yönde hata
+# gerçek para kaybı, doğru yönde hata "testnet bakiyesi gördüm" şaşkınlığı.
+#
+# Üretimde işlem yapmak için `.env` içinde AÇIKÇA yazmak gerekir:
+#     FUTURES_BASE_URL=https://fapi.binance.com
+#
+# ⚠️ PiYASA VERİSİ BUNDAN ETKİLENMEZ: K-15 gereği klines/ticker her zaman
+# `BINANCE_DATA_URL` (gerçek borsa) üzerinden okunur. Bu satır yalnızca
+# HESAP/EMİR yönünü belirler, veri kalitesini DÜŞÜRMEZ.
+FUTURES_BASE_URL   = os.getenv("FUTURES_BASE_URL", "https://testnet.binancefuture.com")
 
 # ── v58 (K-15): PİYASA VERİSİ ≠ İŞLEM BORSASI ─────────────
 # NEDEN VAR — ölçülen vaka (2026-09-02, paper işlemi #21):
