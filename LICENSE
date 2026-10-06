@@ -19,19 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-ADDITIONAL NOTICE — FINANCIAL RISK
-
-This software places leveraged orders on cryptocurrency exchanges. Leveraged
-trading can result in the total loss of deposited funds and, on some venues,
-losses exceeding the initial deposit.
-
-This software has NOT been shown to be profitable. As of the last measurement,
-nine strategy hypotheses were tested and all nine were rejected; no statistical
-edge has been demonstrated. See README.md for the full status.
-
-Nothing in this repository is financial advice. You alone are responsible for
-any funds you risk. The authors accept no liability for trading losses, as
-stated in the warranty disclaimer above.

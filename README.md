@@ -31,7 +31,7 @@ and are **not to be changed** — tuning a threshold after looking at the result
 invalidates the verdict.
 
 > **Do not run this with real money.** Nothing here is financial advice.
-> Leveraged trading can lose your entire deposit. See [LICENSE](LICENSE).
+> Leveraged trading can lose your entire deposit. See [DISCLAIMER.md](DISCLAIMER.md).
 
 ### Why publish something that doesn't work?
 
@@ -150,6 +150,7 @@ measure is `P(take-profit) − base rate`.
 | `DENETIM_RAPORU_v55.md` | independent audit report |
 | `BINANCE_ALGO_EMIR_SEMASI.md` | conditional-order API schema, derived experimentally |
 | `CHANGELOG_v*.md` | version history |
+| **`DISCLAIMER.md`** | financial risk — read this before running anything |
 
 Most internal documentation is in Turkish. The code, comments and this README
 are the best English entry points. Translation help is welcome.
