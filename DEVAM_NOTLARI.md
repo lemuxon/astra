@@ -2990,6 +2990,103 @@ issue #1 olarak dış dünyaya da açık. **Ölçmeden düzeltme.**
 
 ---
 
+### 🔍 PUBLIC SONRASI DENETİM (2026-10-06) — 4 KUSUR BULUNDU
+
+Kullanıcı: *"Her şey kusursuz ve tam olarak yapıldı mı kontrol et."*
+Kendi işimi denetledim; dördü düzeltildi, biri KARAR BEKLİYOR.
+
+#### 🔴 K-105 — TEST ÇALIŞTIRICISI KENDİ KODLAMASINI DÜZELTMİYOR
+
+```
+python testleri_calistir.py > sonuc.log
+UnicodeEncodeError: 'charmap' codec can't encode ... cp1254   (satır 11)
+```
+
+Çıktı yönlendirildiğinde Python locale kodlamasını kullanır (Türkçe:
+cp1254); ilk `print`'teki `█` yazılamıyor ve çalıştırıcı **tek test
+koşmadan** çöküyor. README'nin ilk talimatı CI'da ve `> dosya` ile
+çalıştıran herkeste kırık demek.
+
+⚠️ **Aynı hata sınıfı bir üst katmanda:** v55 düzeltmesi ALT SÜREÇLERİN
+kodlamasını düzeltti ama ÇALIŞTIRICININ KENDİSİNİ atladı.
+`baslat_bot.bat` bu korumayı zaten uyguluyordu — eksik olan tek dosya
+buydu. Düzeltildi (ce8de7b): `sys.stdout/stderr` başta utf-8.
+
+⚠️ **Yanıltıcı çıkış kodu:** ilk ölçümümde `[exited with code 0]`
+gördüm ve geçti sandım. O kod `tail`'den geliyordu, Python'dan değil.
+Pipe'ın sonundaki komutun çıkış kodunu Python'un sonucu sanma.
+
+#### 🔴 TEST SAYISI 554 DEĞİL **560**
+
+```
+SONUÇ formatı (53 paket) : 554
+N/N    formatı (1 paket) :   6   ← test_validator.py
+GERÇEK TOPLAM            : 560   (54 paket, 0 atlanan, 0 başarısız)
+```
+
+554 yalnızca ilk formatı topluyordu. Çifte sayım olmadığı doğrulandı
+(her paket tam olarak 1 rapor satırı). README/CONTRIBUTING düzeltildi.
+
+#### 🟡 README.tr.md'DE HİÇ BAĞLANTI YOKTU
+
+`git mv` ile Türkçeye taşınırken İngilizce README ona link verdi ama
+tersi olmadı. Türkçe okuyan birinin geri dönüş yolu ve
+CONTRIBUTING/SECURITY/DISCLAIMER işaretçisi yoktu. Eklendi.
+README.md da SECURITY/LICENSE'a link vermiyordu.
+
+#### 🟡 ISSUE #1'DE GÖRELİ BAĞLANTI
+
+`../blob/main/CONTRIBUTING.md` — GitHub issue gövdesindeki göreli linki
+mutlak adrese ÇEVİRMİYOR (HTML'de `href` aynen duruyor). Tarayıcı doğru
+çözüyor ama kırılgan. Mutlak URL yapıldı.
+
+### ⚠️ DÜZELTİLMEDİ — KARAR BEKLİYOR: ÜRETİM URL'İ VARSAYILAN
+
+`config.py:20`
+```python
+FUTURES_BASE_URL = os.getenv("FUTURES_BASE_URL", "https://fapi.binance.com")
+```
+
+Temiz kurulumda ÖLÇÜLDÜ (.env yok, ayrı dizin):
+```
+LIVE_TRADING     : False                      ✅ emir açılmaz
+FUTURES_BASE_URL : https://fapi.binance.com   ⚠️ ÜRETİM
+IS_TESTNET       : False
+```
+
+Güvenliği tamamen `LIVE_TRADING=false`'a bağlı. Tehlikeli senaryo:
+depoyu klonlayan biri kendi `.env`'ini yazar, anahtarlarını ve
+`LIVE_TRADING=true` koyar, `FUTURES_BASE_URL` satırını yazmayı atlar
+→ **GERÇEK PARA.** `.env.example`'ı kopyalayan güvende (orada testnet
+yazıyor), kendi dosyasını yazan değil.
+
+Bu, §5.1'in ihlali: *bilinmeyen durum güvenli tarafa düşmeli.*
+Varsayılan `testnet.binancefuture.com` olmalı; üretim isteyen bilinçli
+olarak yazar. Asimetri açık — yanlış yönde hata gerçek para kaybı,
+doğru yönde hata "testnet bakiyesi gördüm" şaşkınlığı.
+
+⚠️ **DEĞİŞTİRMEDİM** çünkü bu üretim işlem yolunda bir davranış
+varsayılanı ve kullanıcının kararı. Kullanıcının kendi `.env`'i bunu
+açıkça ayarladığı için ONUN kurulumunda hiçbir şey değişmez; değişim
+yalnızca dışarıdan klonlayanları korur.
+
+### ✅ DOĞRULANAN (kusur bulunmadı)
+
+```
+atıf yapılan 21 dosya + 41 CHANGELOG   : hepsi takipte
+markdown bağlantıları (5 belge)        : hiç kırık yok
+belgelerde adı geçen 9 fonksiyon/sabit : hepsi kodda var
+karar_kurali.py eşikleri                : 100 / %0.10 / t>2.0 — README ile birebir
+satır sayısı 41.714                     : "~42.000" doğru
+test dosyası 54 = çalıştırıcıda kayıtlı 54
+makineye özgü mutlak yol (bat/vbs/sh)  : yok (%~dp0 ve ASTRA_KOK kullanılmış)
+en büyük takip edilen dosya            : DEVAM_NOTLARI.md 297 KB (şişkinlik yok)
+requirements.txt                        : 20 paket, yerel yol/editable yok
+CI workflow                             : yok → public'te kırmızı X çıkmıyor
+```
+
+---
+
 ## 0.48 GITHUB'A HAZIRLANDI — PUSH BEKLIYOR (2026-10-05)
 
 ### DURUM
@@ -6308,7 +6405,7 @@ yazılmalı ya da `tests/test_veri_tutarliligi.py` kullanılmalı).
 
 **Sürüm:** v58 · 76 kök neden düzeltildi (K-12..88) · 476 test / 43 dosya.
 
-🔴 **§0.49 OKU** (proje PUBLIC — github.com/lemuxon/astra, K-104), sonra §0.46 (makine) ve §0.44 (açık soru)
+🔴 **§0.49 OKU** (proje PUBLIC — github.com/lemuxon/astra, K-104/K-105 + AÇIK KARAR: config.py:20 üretim URL'i varsayılan), sonra §0.46 (makine) ve §0.44 (açık soru)
 
 **Bu oturumda (2026-09-13) yapılanlar — K-84..K-88:**
 - K-84 tempo ölçümü 12 kat yanlıştı (açılan işlem sayıyordu,
