@@ -6518,7 +6518,7 @@ yazılmalı ya da `tests/test_veri_tutarliligi.py` kullanılmalı).
 
 **Sürüm:** v58 · 76 kök neden düzeltildi (K-12..88) · 476 test / 43 dosya.
 
-🔴 **§0.50 OKU** (K-106 güvenli varsayılan + K-107), sonra §0.49 (proje PUBLIC), §0.46 (makine), §0.44 (açık soru), sonra §0.46 (makine) ve §0.44 (açık soru)
+🔴 **§0.50 OKU** (K-106 güvenli varsayılan + K-107), sonra §0.49 (proje PUBLIC), §0.46 (makine durumu) ve §0.44 (AÇIK SORU: paper 0 / canlı 5)
 
 **Bu oturumda (2026-09-13) yapılanlar — K-84..K-88:**
 - K-84 tempo ölçümü 12 kat yanlıştı (açılan işlem sayıyordu,
