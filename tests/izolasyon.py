@@ -35,6 +35,30 @@ import shutil
 import sys
 import tempfile
 
+# ── K-107 (2026-10-06): TEST ÇIKTISININ KODLAMASI ────────────────────
+# K-105 `testleri_calistir.py`'yi düzeltti ama TEST DOSYALARININ KENDİ
+# raporlayıcıları aynı kusuru taşıyordu. Çıktı yönlendirildiğinde Python
+# Windows'ta locale kodlamasını kullanır (Türkçe: cp1254) ve
+# `[HATA] ... → mesaj` satırındaki "→" yazılamaz:
+#
+#     python tests/test_x.py > sonuc.log
+#     UnicodeEncodeError: 'charmap' codec can't encode character '→'
+#
+# ⚠️ İRONİ: bu yalnızca bir test BAŞARISIZ olunca tetiklenir — yani
+# tam olarak çıktıya ihtiyaç duyduğun anda rapor yerine traceback alırsın.
+# Mutasyon testi sırasında bu şekilde yakalandı (K-106'nın guard'ı doğru
+# çalıştı ama hata mesajı basılamadı).
+#
+# CONTRIBUTING.md testleri doğrudan çalıştırmayı söylüyor
+# (`python tests/test_x.py`), bu yüzden çalıştırıcının UTF-8 zorlaması
+# o yolda devreye girmiyor. Burada düzeltiliyor çünkü bu modülü her test
+# dosyası (53/54) proje modülleri import edilmeden ÖNCE yüklüyor.
+for _akis in (sys.stdout, sys.stderr):
+    try:
+        _akis.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass   # eski Python / değiştirilmiş stdout — en kötüsü eski davranış
+
 # Üretim yolları — koruma altındaki dosyalar.
 URETIM_YOLLARI = (
     "data/astra.db",

@@ -22,6 +22,16 @@
 # =========================================================
 import sys, os, json, sqlite3, tempfile, subprocess, shutil
 
+# K-107: bu dosya `tests/izolasyon` import ETMEYEN tek test dosyası, bu yüzden
+# oradaki çıktı-kodlama düzeltmesi buraya ulaşmıyor. Çıktı yönlendirildiğinde
+# locale kodlaması (Türkçe: cp1254) `[HATA] ... →` satırını yazamaz ve
+# BAŞARISIZ test raporu yerine traceback basar.
+for _akis in (sys.stdout, sys.stderr):
+    try:
+        _akis.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 KOK = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
