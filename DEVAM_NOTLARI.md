@@ -2999,6 +2999,53 @@ Maskeleme `log_gizle`'ye taşınınca testim **yanlış modülü** yamalıyordu
 sonuç makineye bağlanacaktı. §4.1'in "yanlış sebeple geçen test" tuzağı.
 Düzeltildi; gerekçe test dosyasında yazılı.
 
+### ✅ LOGLAR TEMİZLENDİ (kullanıcı onayıyla)
+
+Ölçüm önce yeniden yapıldı — ilk sayımım (348) **EKSİKTİ**, döndürülmüş
+yedekleri (`.1`, `.2`) atlamıştım:
+
+```
+logs/astra.log            64 satir    8.8 MB
+logs/astra_onemli.log     68 satir   13.2 MB
+logs/astra_onemli.log.1  100 satir   20.0 MB
+logs/astra_onemli.log.2  111 satir   20.0 MB
+logs/bot_autostart.log   369 satir  211.9 MB
+─────────────────────────────────────
+TOPLAM                   712 satir  274 MB
+```
+
+Sıra: **Disable → Stop → temizle → Enable → Start.** Disable şart —
+10 dakikalık watchdog temizlik ortasında botu geri başlatırdı.
+
+Temizleyici `core/log_gizle.token_gizle`'yi kullanıyor: gelecekteki
+sızıntıyı önleyen işlev geçmişi de temizledi, böylece gerçek veride de
+kanıtlandı. Akış halinde, geçici dosya + `os.replace`, satır sayısı
+tutmazsa dosyayı DEĞİŞTİRMİYOR. Önce kopyada denendi (96.235 satır
+korundu, 64 temizlendi).
+
+⚠️ **AMAÇLANMAYAN DEĞİŞİKLİK YAPTIM (kayıt için):** dosyayı
+`newline=None` (varsayılan) ile okudum → Python **evrensel satır sonu
+çevirisi** yapıyor, tek başına duran CR'leri LF'e dönüştürüyor. Yazarken
+`newline=""` kullansam da çevir okuma anında olmuş oluyor.
+Sonuç: `bot_autostart.log`'ta **9 tek CR** satır sonuna döndü (2.1 milyon
+satırlık dosyada 9 satır ikiye bölündü). Teşhis içeriği kaybolmadı,
+diğer 4 dosya etkilenmedi. **DERS: `newline=""` OKURKEN DE ŞART.**
+Betik düzeltildi ve sentetik testle doğrulandı (CR=1→1, LF=3→3,
+token gitti).
+
+### ✅ SIZINTI DURDU — CANLI VERİDE KANIT
+
+Bot yeniden başlatıldı (PID 13532, 21:31:16) → maskeleme devrede:
+
+```
+'Log maskeleme KURULAMADI' uyarisi : 0      (kurulum basarili)
+yeni kosuda ciplak token satiri     : 0
+yeni kosuda <BOT_TOKEN> satiri      : 4     (hata olustu, maskelendi)
+```
+
+Telegram hatası yine oluştu — token hâlâ geçersiz — ama artık
+log'a `<BOT_TOKEN>` yazılıyor.
+
 ### KULLANICIDAN BEKLENEN
 
 1. **Token GEÇERSİZ** — Telegram "was rejected" diyor. @BotFather →
