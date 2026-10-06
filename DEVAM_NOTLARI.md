@@ -3010,10 +3010,32 @@ Düzeltildi; gerekçe test dosyasında yazılı.
    O ana kadar her polling denemesi (artan geri çekilme) token'ı yazmaya
    devam eder.
 
+### 🟡 §0.44 HAKKINDA YENİ ÖLÇÜM — PAPER İŞLEM AÇTI
+
+Yeniden başlatmadan **31 dakika sonra** paper bir işlem açtı:
+
+```
+id=1 | ASTERUSDT | LONG | mod=PAPER | kaldirac=3.0 | durum=ACIK
+```
+
+➤ Paper yolu **evrensel olarak erken dönmüyor.** Arama alanı daraltı.
+
+**HİPOTEZ (kanıt değil): erken dönüş YÖNE BAĞLI olabilir.**
+§0.44'te canlının açtığı 5 emrin **hepsi SHORT**'tu, paper 0 açmıştı.
+Şimdi açılan işlem **LONG**. Yalnızca SHORT'ta ulaşılabilen bir erken
+dönüş, "canlı 5 / paper 0" şeklini tam olarak açıklar.
+
+⚠️ **TEK GÖZLEM KANIT DEĞİLDİR.** Ölçmeden düzeltme. Somut bir SHORT
+sinyalini (§0.44'teki APTUSDT vakası) `sinyal_isle` içinde adım adım sür
+ve hangi satırın döndüğünü KAYDET. Bakılacak yerler: baştaki yön
+ayrıştırma, `SHORT_ENABLED`, bir yolda olup ötekinde olmayan yön kapısı.
+
+Bu ölçüm GitHub issue #1'e yorum olarak eklendi (katkıcılar için).
+
 ### DURUM
 
-Tam paket: **56 paket · 581 test · 0 başarısız.** Açık soru §0.44
-değişmedi — bot çalışıyor, paper'ın işlem açıp açmadığı izlenecek.
+Tam paket: **56 paket · 581 test · 0 başarısız.** Bot çalışıyor,
+sayacın ilerlemesi izlenecek.
 
 ---
 
