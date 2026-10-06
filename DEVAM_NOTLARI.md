@@ -3046,6 +3046,57 @@ yeni kosuda <BOT_TOKEN> satiri      : 4     (hata olustu, maskelendi)
 Telegram hatası yine oluştu — token hâlâ geçersiz — ama artık
 log'a `<BOT_TOKEN>` yazılıyor.
 
+### ✅ TELEGRAM YENİDEN KURULDU (2026-10-07 01:32)
+
+Kullanıcı: *"Aktif botum yok eski hesabımı sildim."*
+
+⚠️ **İKİ TEŞHİSİM YANLIŞTI, DÜZELTİLDİ:**
+
+1. "Kopyaladıktan sonra tekrar Revoke bastın" dedim — **değildi.**
+   Bot zaten SİLİNMİŞTİ, o yüzden hangi token olursa olsun 401 dönüyordu.
+2. "`CHAT_ID` aynı kalır" dedim — **yanlış.** `CHAT_ID` bota değil
+   **HESABA** bağlı; hesap silindiği için o da geçersizdi. Yalnızca
+   token'ı değiştirseydik bot var olmayan bir hesaba göndermeye
+   çalışırdı — ve bunu fark etmek zor olurdu.
+
+➤ `/newbot` ile yeni bot açıldı. Her iki değer birlikte yazıldı:
+
+```
+bot ID  : 8952838707 (eski, silinmis)  ->  8694537034 (yeni)
+bot adi : @Astrabrooker_bot
+CHAT_ID : yeni hesabin id'si (getUpdates ile OTOMATIK bulundu)
+.env    : 120 satir / 37 anahtar / CRLF korundu, YALNIZCA 2 satir degisti (66, 69)
+```
+
+**Kimlik bilgisini kullanıcı girdi** ([[kimlik-bilgisi-yazmama]]).
+Yardımcı betik (`scratchpad/telegram_kur.py`) biçimi denetledi, `getMe`
+ile Telegram'a sordu, `getUpdates` ile CHAT_ID'yi buldu, yazdı ve
+**yazdıktan SONRA geri okuyup tekrar doğruladı.**
+
+⚠️ **İlk sürümüm yalnızca YAZMADAN ÖNCE doğrulamıştı** — bu yüzden ölü
+bir token'a "TAMAMLANDI" diyebildi. Ölçüm yazma sonrasına da taşındı.
+Aynı ders, başka bir kılıkta: **değiştirdiğin şeyi değiştirdikten
+sonra ölç.**
+
+### ✅ UCTAN UCA KANIT (PID 28780, 01:32:40)
+
+```
+01:33:03  Telegram Bot v55.0 baslatildi — 38 komut aktif   (polling = token gecerli)
+01:33:07  [TG] gonderildi: tip=genel (1 parca, 1098 karakter)  (CHAT_ID gecerli)
+yeni kosuda ERROR: 0 · CRITICAL: 0 · ciplak token: 0
+```
+
+⚠️ Hatanın YOKLUĞU çalıştığının kanıtı değildir (§5.1). Pozitif kanıt
+arandı ve bulundu: K-44'ün eklediği "başarılı gönderim de loglanır"
+satırı sayesinde gerçek bir mesajın gittiği görüldü.
+
+### K-108 MASKELEME YENİ TOKEN'I DA KAPSIYOR
+
+Yeni koşuda Telegram hatası oluşmadığı için maskeleme tetiklenmedi
+(0 çıplak, 0 maskeli). Maskeleme `.env`'den okunan değeri kullanıyor,
+yani yeni token otomatik kapsamda. Önceki koşuda (PID 13532) canlı
+veride kanıtlanmıştı: 0 çıplak / 4 maskeli.
+
 ### KULLANICIDAN BEKLENEN
 
 1. **Token GEÇERSİZ** — Telegram "was rejected" diyor. @BotFather →
