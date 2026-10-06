@@ -2914,6 +2914,119 @@ sembol `encodeURIComponent` ile kaçırılıyor.
 
 ---
 
+## 0.50 🔴 K-106 / K-107 — GÜVENLİ VARSAYILAN ve TEST ÇIKTISI (2026-10-06)
+
+Kullanıcı: *"testnet varsayılanını da düzelt."* (§0.49'da karar bekleyen bulgu)
+
+### K-106 — İŞLEM BORSASI VARSAYILANI ÜRETİMDİ
+
+`config.py:20` eskiden:
+```python
+FUTURES_BASE_URL = os.getenv("FUTURES_BASE_URL", "https://fapi.binance.com")
+```
+
+Temiz kurulumda ÖLÇÜLDÜ (`.env` yok, dotenv saplanmış, ayrı dizin):
+```
+FUTURES_BASE_URL : https://fapi.binance.com   ← ÜRETİM
+LIVE_TRADING     : False                      ← tek koruma
+IS_TESTNET       : False
+```
+
+Tehlikeli senaryo: depoyu klonlayan biri kendi `.env`'ini yazar,
+anahtarlarını ve `LIVE_TRADING=true` koyar, URL satırını atlar →
+**GERÇEK PARA.** `.env.example`'ı kopyalayan güvendeydi (orada testnet
+yazıyor), kendi dosyasını yazan değildi.
+
+➤ **Düzeltme:** varsayılan `testnet.binancefuture.com`. Üretim için
+`.env`'de AÇIKÇA yazmak gerekir. Asimetri: yanlış yönde hata gerçek para
+kaybı, doğru yönde hata "testnet bakiyesi gördüm" şaşkınlığı.
+
+⚠️ **Piyasa verisi ETKİLENMEDİ** — K-15 gereği klines/ticker her zaman
+`BINANCE_DATA_URL` (gerçek borsa) üzerinden okunuyor. Doğrulandı: testte
+`test_piyasa_verisi_URETIMDE_kalir` bu değişmezi kilitliyor.
+
+⚠️ **SIFIRLAMA GEREKMEDİ (§5.3):** kullanıcının `.env`'i bu satırı
+AÇIKÇA ayarlıyor, yani ONUN kurulumunda etkin değer değişmedi
+(ölçüldü: testnet, LIVE_TRADING=True, IS_TESTNET=True — öncesiyle aynı).
+Değişiklik yalnızca dışarıdan klonlayanları koruyor.
+
+⚠️ Spot URL (`BINANCE_BASE_URL`) DEĞİŞTİRİLMEDİ — yalnızca
+`exchangeInfo`/`depth` için kullanılıyor, emir yolu değil; testnete
+çekmek K-15'teki sahte fiyat sorununu geri getirirdi.
+
+ℹ️ `core/preflight.py:101` zaten gerçek para modunu tespit edip
+"⚠️ GERÇEK PARA MODU AKTİF" basıyor ama `gecti=True` ile — yani uyarır,
+ENGELLEMEZ. İkinci katman olarak duruyor; sert kapı eklenmedi
+(kullanıcı istemedi, kapsam dışı).
+
+### K-107 — TEST DOSYALARI HATA MESAJINI YAZARKEN ÇÖKÜYOR
+
+K-106'nın **mutasyon testi sırasında ortaya çıktı.** Guard doğru
+çalıştı (kırmızıya döndü) ama rapor basılamadı:
+
+```
+[HATA] test_futures_url_varsayilani_TESTNET
+UnicodeEncodeError: 'charmap' codec can't encode character '→' ... cp1254
+```
+
+K-105 `testleri_calistir.py`'yi düzeltmişti; **test dosyalarının KENDİ
+raporlayıcıları** aynı kusuru taşıyordu. `[HATA] ... → mesaj` satırındaki
+`→` cp1254'te yazılamıyor.
+
+⚠️ **İRONİ:** yalnızca bir test BAŞARISIZ olunca tetikleniyor — yani tam
+olarak çıktıya ihtiyaç duyduğun anda rapor yerine traceback alıyorsun.
+Bu yüzden aylarca görünmedi: paket hep yeşildi.
+
+⚠️ CONTRIBUTING.md testleri doğrudan çalıştırmayı söylüyor
+(`python tests/test_x.py`), o yolda çalıştırıcının UTF-8 zorlaması
+devreye girmiyor.
+
+➤ **Düzeltme:** `tests/izolasyon.py` modül düzeyinde
+`sys.stdout/stderr.reconfigure(utf-8)`. Bu modülü 53/54 test dosyası
+proje modüllerinden ÖNCE yüklüyor. 54. dosya (`test_kontrol_betigi.py`,
+izolasyon import etmeyen tek dosya) ayrıca düzeltildi.
+Kapsama doğrulandı: **54/54**.
+
+### MUTASYON TESTİ — ÜÇ ŞEY BİRDEN KANITLANDI
+
+Varsayılan üretime geri alındı, mutasyonun UYGULANDIĞI doğrulandı
+(`assert n == 1`), sonra eskiden çöken koşulda çalıştırıldı
+(`env -u PYTHONIOENCODING`, çıktı yönlendirilmiş):
+
+```
+[HATA]  test_futures_url_varsayilani_TESTNET
+        → FUTURES_BASE_URL varsayılanı 'https://fapi.binance.com' ...
+[HATA]  test_varsayilanda_IS_TESTNET_dogru
+[GEÇTİ] test_ACIK_uretim_urlsi_SAYGI_GORUR      ← KONTROL yeşil kaldı
+SONUÇ: 6 geçti, 2 başarısız     ·     çıkış kodu 1
+```
+
+1. **K-107 düzeldi** — Türkçe karakterler ve `→` düzgün bastı
+2. **K-106 guard'ı kırmızıya dönebiliyor** — boş test değil
+3. **Kontrol testi yeşil kaldı** — guard "üretimi tamamen engelle"
+   değil; açıkça üretim isteyen saygı görüyor. Bu kontrol olmadan
+   guard'ı, üretimi yasaklayan bir kod da geçerdi (§4.1).
+
+### YENİ TEST DOSYASI
+
+`tests/test_guvenli_varsayilan_url.py` — 8 test, çalıştırıcıya kayıtlı
+(`test_kosucu_kapsami.py` meta-testi doğruladı). 3 guard + 3 kontrol +
+2 değişmez (K-15 veri URL'i, yedek URL ana URL'yi izler).
+
+⚠️ Test ALT SÜREÇTE `dotenv`'i SAPLAYARAK ölçüyor — gerçek `.env`
+okunmuyor, yoksa sonuç makineye göre değişirdi. §0.49'da kendi ilk
+ölçümüm tam bu yüzden yanlış çıkmıştı (config kendi `.env`'ini yükledi,
+"temiz kurulum" sandım).
+
+### BU OTURUMUN DERSİ
+
+Üç kusurun üçü de **ölçümün kendisinde** çıktı, işlem mantığında değil:
+çalıştırıcı kendi çıktısını bozuyordu (K-105), test dosyaları hata
+mesajını basamıyordu (K-107), ve kamuya açık test sayısı 6 eksikti.
+§10 yine doğru: *kör nokta kodun içinde değil, kodun ölçüldüğü yerde.*
+
+---
+
 ## 0.49 🟢 PROJE HERKESE AÇIK — github.com/lemuxon/astra (2026-10-06)
 
 Kullanıcı: *"Projemi herkese açıp insanların geliştirmesini istiyorum."*
@@ -6405,7 +6518,7 @@ yazılmalı ya da `tests/test_veri_tutarliligi.py` kullanılmalı).
 
 **Sürüm:** v58 · 76 kök neden düzeltildi (K-12..88) · 476 test / 43 dosya.
 
-🔴 **§0.49 OKU** (proje PUBLIC — github.com/lemuxon/astra, K-104/K-105 + AÇIK KARAR: config.py:20 üretim URL'i varsayılan), sonra §0.46 (makine) ve §0.44 (açık soru)
+🔴 **§0.50 OKU** (K-106 güvenli varsayılan + K-107), sonra §0.49 (proje PUBLIC), §0.46 (makine), §0.44 (açık soru), sonra §0.46 (makine) ve §0.44 (açık soru)
 
 **Bu oturumda (2026-09-13) yapılanlar — K-84..K-88:**
 - K-84 tempo ölçümü 12 kat yanlıştı (açılan işlem sayıyordu,
