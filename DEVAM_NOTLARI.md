@@ -2914,6 +2914,119 @@ sembol `encodeURIComponent` ile kaçırılıyor.
 
 ---
 
+## 0.52 ⏹️ PROJE DURDURULDU — EKSİKSİZ TARAMA (2026-10-07 21:51)
+
+Kullanıcı: *"Projeyi ve onu başlatma ihtimali olan her şeyi kontrol et ve durdur."*
+§0.44'te yalnızca `ASTRA_Bot` durdurulup `ASTRA_OrderBook` atlandığı için
+bu sefer TÜM başlatma vektörleri tarandı.
+
+### TARANAN 11 VEKTÖR
+
+```
+1  Zamanlanmis gorevler (196 gorev tarandi)  -> 2 ASTRA gorevi
+2  Calisan surecler                          -> PID 1800 bulundu, durduruldu
+3  Baslangic klasorleri (kullanici+ortak)    -> TEMIZ (yalniz Ableton)
+4  Registry Run/RunOnce (5 konum)            -> TEMIZ
+5  Windows servisleri                        -> astra servisi YOK
+6  Docker konteynerleri                      -> docker kurulu degil
+7  WMI olay abonelikleri                     -> CommandLineEventConsumer 0
+8  Claude zamanlanmis gorevleri              -> 1 adet, DISABLED + tek seferlik
+                                                 (astra-uc-olcum, 15.09'da calisti)
+9  Oturum cron'lari (CronList)               -> yok
+10 Borsadaki acik pozisyon/emir              -> 0 pozisyon, 0 acik emir
+11 Contabo sunucusu                          -> BURADAN DOGRULANAMADI (asagi bak)
+```
+
+### NIHAI DURUM
+
+```
+ASTRA_Bot        State=Disabled  SonSonuc=267014 (kullanici sonlandirdi)
+ASTRA_OrderBook  State=Ready     SonSonuc=1      (BASLATAMIYOR)
+python/pythonw   : 0
+wscript/cscript  : 0
+bot_autostart.log: duragan (20 sn'de 0 bayt buyume)
+borsa            : 0 pozisyon, 0 acik emir
+```
+
+### ✅ DİSABLE'IN GERÇEKTEN TUTTUĞU ÖLÇÜLDÜ
+
+`Get-ScheduledTaskInfo` Disabled bir görev için bile `NextRunTime`
+gösteriyor — bu yüzden "Disabled = çalışmaz" varsayılmadı,
+**tetikleme anı beklenip ölçüldü:**
+
+```
+tetikleme ani : 21:47:09
+sonra         : ASTRA_Bot LastRun HALA 21:37:10  -> TETIKLENMEDI
+                surec sayisi 0
+```
+
+### ⚠️ ASTRA_OrderBook KAPATILAMADI (yönetici gerekiyor)
+
+```
+Disable-ScheduledTask  -> "Erisim engellendi"
+schtasks /Change /DISABLE -> "Erisim engellendi"
+```
+
+Görev yönetici olarak oluşturulmuş. ⚠️ **§0.45'teki notum yanlıştı:**
+"`Set-ScheduledTask` yönetici ister, `Disable-ScheduledTask` istemez"
+yazmışım — Disable de istiyor.
+
+UAC penceresi açıldı, kullanıcı iptal etti. Tekrar denenmedi.
+
+**AMA BAŞLATAMIYOR — ölçüldü, varsayılmadı:**
+```
+hedef dosya baslat_orderbook.bat   : YOK (yeniden adlandirilmis)
+LastTaskResult                     : 1 (basarisiz)
+logs/orderbook.log son yazma       : 2026-09-21 18:00  (16 GUN)
+data/orderbook en yeni dosya       : 21 Eylul
+```
+10 dakikada bir tetikleniyor, her seferinde başarısız dönüyor.
+Tam kapatma için YÖNETİCİ PowerShell'de:
+```
+Disable-ScheduledTask -TaskName ASTRA_OrderBook
+```
+
+### ⚠️ STOP-SCHEDULEDTASK ÇOCUK SÜRECİ HEMEN ÖLDÜRMÜYOR
+
+Ölçüldü: durdurma 21:37'de verildi, `bot_autostart.log` **21:46:08**'e
+kadar yazmaya devam etti (413 satır). `cmd.exe` sarmalayıcısı hemen
+öldü (görev "durduruldu" gösterdi) ama python çocuğu Optuna eğitiminde
+bloke olduğu için ~9 dakika daha çalıştı. `yasam_dongusu.log`'da
+**BITTI satırı YOK** — `.bat`'in son satırına ulaşılmadı.
+
+➤ **DERS: durdurduktan hemen sonra "durdu" demek yetmez.** Log'un
+DURAĞAN olduğunu iki ölçümle doğrula (boyut + son yazma zamani).
+Süreç sayısı tek başına yanıltıcı olabilir — benim 21:37'deki
+sayımım 0 döndürdü ama log yazıyordu; bu çelişkiyi tam
+açıklayamadım, yalnızca şu anın durumunu kesinleştirdim.
+
+### ⚠️ BURADAN DOĞRULANAMAYAN: CONTABO SUNUCUSU
+
+Depoda `sunucu/astra.service` (systemd) ve `docker/watchdog.sh`
+(`*/5 * * * *` cron) var. Sunucuda kuruluysa ve etkinse bot ORADA
+bağımsız çalışır. SSH erisimi kullanilmadi. Kontrol/kapatma:
+```
+systemctl disable --now astra
+systemctl status astra
+crontab -l            # watchdog.sh satirini kaldir
+```
+⚠️ §"Calisma duzeni": ikisi AYNI ANDA ÇALIŞMAMALI (Telegram
+cakisir, veri ikiye bolunur).
+
+### VERİ DURUMU (durdurma anı)
+
+```
+trades: 4 kayit, HEPSI mod=PAPER, HEPSI ACIK
+  ASTERUSDT LONG · ONDOUSDT LONG · JUPUSDT LONG · ETHFIUSDT LONG
+```
+Dördü de LONG — §0.44'teki yön hipoteziyle tutarlı (issue #1).
+Bot kapalı olduğu için bu paper pozisyonlarda ZAMAN STOP işlemez;
+devam edince kapanış süreleri şişmiş görünecek.
+
+Borsada pozisyon/emir YOK — testnet tarafinda asili kalan bir sey degil.
+
+---
+
 ## 0.51 ▶️ BOT YENİDEN BAŞLATILDI + K-108 TOKEN SIZINTISI (2026-10-06)
 
 Kullanıcı: *"botu tekrar başlat."*
@@ -6741,7 +6854,7 @@ yazılmalı ya da `tests/test_veri_tutarliligi.py` kullanılmalı).
 
 **Sürüm:** v58 · 76 kök neden düzeltildi (K-12..88) · 476 test / 43 dosya.
 
-🔴 **§0.51 OKU** (bot ÇALIŞIYOR + K-108 token sızıntısı; token YENİLENMELİ), sonra §0.50 (K-106/K-107), sonra §0.49 (proje PUBLIC), §0.46 (makine durumu) ve §0.44 (AÇIK SORU: paper 0 / canlı 5)
+🔴 **§0.52 OKU** (PROJE DURDURULDU 2026-10-07; ASTRA_OrderBook yönetici gerektirdiği için Ready kaldı ama başlatamıyor), sonra §0.51 (Telegram kuruldu), §0.50 (K-106/K-107), sonra §0.49 (proje PUBLIC), §0.46 (makine durumu) ve §0.44 (AÇIK SORU: paper 0 / canlı 5)
 
 **Bu oturumda (2026-09-13) yapılanlar — K-84..K-88:**
 - K-84 tempo ölçümü 12 kat yanlıştı (açılan işlem sayıyordu,
