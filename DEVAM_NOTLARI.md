@@ -2914,6 +2914,86 @@ sembol `encodeURIComponent` ile kaçırılıyor.
 
 ---
 
+## 0.53 ✅ SUNUCU DENETLENDİ — TEMİZ, AMA SSH AÇIK (2026-10-14)
+
+Kullanıcı: *"Sunucuyu kontrol edelim."* §0.52'de "buradan
+doğrulanamadı" diye bırakılan madde KAPANDI.
+
+### ADRES NASIL BULUNDU (notlarda yoktu)
+
+`sunucu/PUTTY_ADIMLARI.md` temizlenmiş (`<SUNUCU_IP>`), `~/.ssh`
+dizini hiç yok. İki yerel kayıttan bulundu:
+```
+WinSCP oturumu  : HKCU\Software\Martin Prikryl\WinSCP 2\Sessions 0
+PuTTY host key  : HKCU\Software\SimonTatham\PuTTY\SshHostKeys
+```
+⚠️ PuTTY host anahtarının kayıtlı olması = bu makineden BAĞLANILMIŞ.
+Önce "hiç bağlanılmamış olabilir" demiştim — yanlıştı, yalnızca
+`~/.ssh`'ye bakmıştım; PuTTY kayıtlarını REGISTRY'de tutuyor.
+
+✅ **IP hiçbir commit'te yok** (20 commit tarandı) — public depoya
+hiç girmemiş.
+
+### SONUÇ: SUNUCUDA HİÇBİR ŞEY ÇALIŞMIYOR
+
+```
+makine     : vmi3329642 · uptime 2 hafta 3 gun
+ASTRA sureci        : YOK           <- dizine degil SURECE bakildi (§8.0 dersi)
+astra.service       : disabled + inactive (dead)
+baska astra birimi  : yok
+cron / watchdog.sh  : BOS - hic kurulmamis
+/root/astra_v44     : yok (zombi dizini gercekten temizlenmis)
+/opt/astra          : duruyor, 3.7 GB
+443 kurulu baglanti : 0            <- Binance ile konusmuyor
+son log yazma       : 2026-08-26   <- 7 HAFTA
+RAM                 : 258 Mi / 11 Gi  (eski zombi 6.4 GB tutuyordu)
+.env                : LIVE_TRADING=false · testnet URL
+```
+
+⚠️ **Uptime 2 hafta 3 gün** — yani sunucu bu süre içinde yeniden
+başlamış ve hiçbir şey otomatik ayaklanmamış. Logon/boot tetikleyicisi
+olmadığının sahada kanıtı.
+
+➤ **Yerel + sunucu: proje her iki yerde de TAM DURMUŞ.**
+
+### 🔴 AÇIK GÜVENLİK SORUNU — SSH
+
+Ölçüldü (kimlik doğrulamadan önce, uzaktan):
+```
+ssh -o PreferredAuthentications=none root@<IP>
+-> Permission denied (publickey,PASSWORD)
+```
+Sunucuda:
+```
+PermitRootLogin yes
+#PasswordAuthentication yes     <- yorum satiri = OpenSSH varsayilani "yes"
+```
+
+**Parola girişi HÂLÂ AÇIK.** `PUTTY_ADIMLARI.md` §5'teki sertleştirme
+adımı hiç uygulanmamış — aylardır bekleyen açık uç, artık ölçümle
+doğrulandı.
+
+⚠️ **Root parolası 6 HANELİ SAYI** (kullanıcı sohbete yazdı, ben
+kullanmadım). İnternete açık root + 6 hane = ~10^6 olasılık, kaba
+kuvvetle dakikalar içinde kırılabilir. **DEĞİŞTİRİLMELİ.**
+
+⚠️ Bu makinede SSH ANAHTARI YOK (`~/.ssh` dizini hiç yok; arama
+yalnızca ilgisiz `.pem` sertifikalarını buldu). Bu yüzden **SIRA
+ÖNEMLİ** — parolayı önce kapatırsan erişimi kaybedersin:
+
+```
+1. passwd                         (sunucuda, guclu yeni parola)
+2. ssh-keygen -t ed25519          (yerelde)
+3. acik anahtari authorized_keys'e ekle
+4. YENI pencereden anahtarla gir  (eskisini KAPATMA)
+5. ancak o zaman: PasswordAuthentication no + PermitRootLogin prohibit-password
+```
+
+⚠️ `/opt/astra/.env` içindeki `BOT_TOKEN` ESKİ token (bot silindi,
+§0.51). İşlevsiz ama bayat — sunucu tekrar kullanılırsa güncellenmeli.
+
+---
+
 ## 0.52 ⏹️ PROJE DURDURULDU — EKSİKSİZ TARAMA (2026-10-07 21:51)
 
 Kullanıcı: *"Projeyi ve onu başlatma ihtimali olan her şeyi kontrol et ve durdur."*
@@ -6854,7 +6934,7 @@ yazılmalı ya da `tests/test_veri_tutarliligi.py` kullanılmalı).
 
 **Sürüm:** v58 · 76 kök neden düzeltildi (K-12..88) · 476 test / 43 dosya.
 
-🔴 **§0.52 OKU** (PROJE DURDURULDU 2026-10-07; ASTRA_OrderBook yönetici gerektirdiği için Ready kaldı ama başlatamıyor), sonra §0.51 (Telegram kuruldu), §0.50 (K-106/K-107), sonra §0.49 (proje PUBLIC), §0.46 (makine durumu) ve §0.44 (AÇIK SORU: paper 0 / canlı 5)
+🔴 **§0.53 OKU** (sunucu denetlendi: TEMİZ ama SSH parola girişi AÇIK, root parolası zayıf — DEĞİŞTİR), sonra §0.52 (proje durduruldu), sonra §0.51 (Telegram kuruldu), §0.50 (K-106/K-107), sonra §0.49 (proje PUBLIC), §0.46 (makine durumu) ve §0.44 (AÇIK SORU: paper 0 / canlı 5)
 
 **Bu oturumda (2026-09-13) yapılanlar — K-84..K-88:**
 - K-84 tempo ölçümü 12 kat yanlıştı (açılan işlem sayıyordu,
