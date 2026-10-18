@@ -2914,6 +2914,81 @@ sembol `encodeURIComponent` ile kaçırılıyor.
 
 ---
 
+## 0.54 🔒 SUNUCU GÜVENLİK DENETİMİ (2026-10-18)
+
+Kullanıcı: *"Yaptıklarımı kontrol eder misin."*
+⚠️ **Bu dosya PUBLIC — IP adresleri bilerek YAZILMADI.**
+
+### KULLANICININ YAPTIKLARI
+
+| iş | sonuç |
+|---|---|
+| `ASTRA_OrderBook` kapat (yönetici) | ✅ Disabled |
+| root parolasını değiştir | ✅ `passwd -S` → son değişiklik 2026-10-18 |
+| SSH anahtarı üret | ❌ yapılmamış (authorized_keys: 0) |
+| parola girişini kapat | ❌ `sshd -T` → passwordauthentication **yes** |
+
+### 🔴 KABA KUVVET SALDIRISI — ÖLÇÜLDÜ
+
+```
+basarisiz giris denemesi : 296.382   (btmp 2026-10-01'den beri = 18 gun)
+                         ~ 16.500/gun ~ 11/dakika
+en cok deneyen tek IP    : ~6.000 deneme
+```
+
+Eski root parolası **6 haneli sayıydı** (10^6 olasılık). 18 günde 296 bin
+deneme. Saldırganlar genelde sözlük parolası dener, sayıları tek tek
+taramaz — **kırılmamasının sebebi bu, güvenlik değil.**
+btmp yalnızca 1 Ekim'e kadar geriye gidiyor (log döndürme); saldırı
+büyük olasılıkla sunucu açıldığından beri sürüyor.
+
+### ELE GEÇİRİLME İZİ — BULUNMADI
+
+```
+authorized_keys          : 0 anahtar     <- saldirgan anahtari EKLENMEMIS
+login kabugu olan hesap  : yalniz root   <- yeni kullanici YOK
+en yuksek CPU            : %0.6 (sshd)   <- madenci YOK
+root crontab             : bos           <- kalicilik YOK
+```
+
+Başarılı girişler **iki IP ailesinden** geliyor:
+- Biri bugünkü girişle aynı aile (konut ISP'si, dinamik IP) → kullanıcı
+- Diğeri yalnızca 2026-08-25/26 — **§8.0'daki sunucu kurulum tarihleriyle
+  birebir örtüşüyor**, kısa ardışık oturumlar (kurulum deseni)
+
+⚠️ İkinci aile **kullanıcıya teyit ettirilmeli** — zamanlama güçlü kanıt
+ama kesin değil.
+
+⚠️ `auth.log` "Accepted" satırı boş döndü. Ama authorized_keys 0 olduğu
+için **tüm başarılı girişler zorunlu olarak PAROLAYLA** yapılmış.
+
+### ⚠️ YAPILANDIRMA TUZAĞI — "no" YAZILI AMA "yes" ÇALIŞIYOR
+
+```
+/etc/ssh/sshd_config.d/50-cloud-init.conf      -> PasswordAuthentication yes
+/etc/ssh/sshd_config.d/60-cloudimg-settings.conf -> PasswordAuthentication no
+sshd -T (CALISAN deger)                          -> passwordauthentication yes
+```
+
+OpenSSH **İLK bulunan değeri** kullanır. `sshd_config.d/` dosyaları ad
+sırasıyla okunur: `50-` önce gelir, `yes` kazanır, `60-`'taki `no`
+SESSİZCE YOK SAYILIR. Ubuntu'da `Include` satırı ana dosyanın EN
+BAŞINDA olduğu için **ana `sshd_config`'i düzenlemek de işe yaramaz.**
+
+➤ Parola girişini kapatırken **`50-cloud-init.conf`** düzeltilmeli ve
+dosyaya değil **`sshd -T` çıktısına** bakılarak doğrulanmalı.
+Bu, §5.1'in sunucu kılığı: *yazılı olan ≠ çalışan.*
+
+### SIRADAKİ — KULLANICI KARARI
+
+A) **Sertleştir:** anahtar üret → authorized_keys → YENİ pencereden test
+   → `50-cloud-init.conf`'ta `no` → `sshd -t` → reload → `sshd -T` ile doğrula.
+B) **Kapat:** sunucu 2026-08-26'dan beri kullanılmıyor, proje yerelde
+   çalışıyor. Boşta duran, izlenmeyen, sürekli saldırı alan bir root
+   sunucusunun en güvenli hali KAPALI olması (Contabo paneli).
+
+---
+
 ## 0.53 ✅ SUNUCU DENETLENDİ — TEMİZ, AMA SSH AÇIK (2026-10-14)
 
 Kullanıcı: *"Sunucuyu kontrol edelim."* §0.52'de "buradan
@@ -6934,7 +7009,7 @@ yazılmalı ya da `tests/test_veri_tutarliligi.py` kullanılmalı).
 
 **Sürüm:** v58 · 76 kök neden düzeltildi (K-12..88) · 476 test / 43 dosya.
 
-🔴 **§0.53 OKU** (sunucu denetlendi: TEMİZ ama SSH parola girişi AÇIK, root parolası zayıf — DEĞİŞTİR), sonra §0.52 (proje durduruldu), sonra §0.51 (Telegram kuruldu), §0.50 (K-106/K-107), sonra §0.49 (proje PUBLIC), §0.46 (makine durumu) ve §0.44 (AÇIK SORU: paper 0 / canlı 5)
+🔴 **§0.54 OKU** (sunucu: parola DEĞİŞTİ ama giriş hâlâ AÇIK; 18 günde 296 bin kaba kuvvet denemesi; 50-cloud-init.conf tuzağı), sonra §0.52 (proje durduruldu), sonra §0.51 (Telegram kuruldu), §0.50 (K-106/K-107), sonra §0.49 (proje PUBLIC), §0.46 (makine durumu) ve §0.44 (AÇIK SORU: paper 0 / canlı 5)
 
 **Bu oturumda (2026-09-13) yapılanlar — K-84..K-88:**
 - K-84 tempo ölçümü 12 kat yanlıştı (açılan işlem sayıyordu,
