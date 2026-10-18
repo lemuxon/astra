@@ -44,6 +44,23 @@ python main.py bot            # trading döngüsü + Telegram
 
 Panel: `http://127.0.0.1:8080` (yalnızca localhost)
 
+### 7/24 çalışsın diye (Windows)
+
+Yukarıdaki `python main.py bot` terminal kapanınca durur. Oturum
+açılışında başlayıp 10 dakikada bir "hâlâ çalışıyor mu?" diye bakan
+zamanlanmış görevi kurmak için (yönetici **gerekmez**):
+
+```bash
+powershell -ExecutionPolicy Bypass -File .\gorev_kur.ps1
+```
+
+⚠️ Önce `.env`'i kur — görev botu 2 dakika içinde başlatır. Kapalı
+kurup sonra açmak için `-DevreDisi` ekle. Durdururken **sıra önemli**:
+önce `Disable-ScheduledTask -TaskName ASTRA_Bot`, sonra `Stop-...` —
+yoksa 10 dakikalık tekrar botu geri başlatır.
+
+Bilgisayar sıfırlandıysa: adım adım geri kurulum `DEVAM_NOTLARI.md` §0.56.
+
 ### `.env` — zorunlu alanlar
 
 | değişken | ne işe yarar |

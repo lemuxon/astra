@@ -57,6 +57,10 @@ python main.py bot            # trading loop + Telegram
 
 Dashboard: `http://127.0.0.1:8080` (localhost only)
 
+To keep it running 24/7 on Windows (starts at logon, re-checks every 10 minutes,
+no admin needed): `powershell -ExecutionPolicy Bypass -File .\gorev_kur.ps1`.
+Set up `.env` first — the task starts the bot within 2 minutes.
+
 ### Required `.env` values
 
 | variable | purpose |
