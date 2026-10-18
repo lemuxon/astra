@@ -2914,6 +2914,117 @@ sembol `encodeURIComponent` ile kaçırılıyor.
 
 ---
 
+## 0.56 💾 BİLGİSAYAR SIFIRLANIRSA — GERİ KURULUM (2026-10-18)
+
+Kullanıcı: *"Ne zaman GitHub'a dönsem kurabilir miyim? Bilgisayarım
+sıfırlansa bile mi?"*
+
+Cevap TAHMİN değil, ÖLÇÜLDÜ: depo GitHub'dan sıfırdan klonlandı
+(ayrı dizin, kimlik doğrulamasız, `.env`/veri/model YOK) ve test edildi.
+
+### ✅ KANIT — TEMİZ KLON
+
+```
+git clone https://github.com/lemuxon/astra.git   -> 219 dosya (yerel ile ayni)
+python testleri_calistir.py                       -> 56 paket · 581 test · 0 basarisiz
+```
+
+`requirements.txt` kodun içe aktardığı her 3. parti modülü kapsıyor mu —
+ölçüldü (AST ile tüm import'lar tarandı). Eksik görünen 3 modülün üçü
+de bilinçli olarak isteğe bağlı:
+
+| modül | neden sorun değil |
+|---|---|
+| `PIL` | `matplotlib` onu zaten kuruyor (`pillow>=8`) |
+| `gym` | yalnızca `gymnasium` yoksa denenen yedek (`try/except`) |
+| `psycopg2` | yoksa `_PG_AVAILABLE=False` → SQLite'a düşüyor |
+
+### 🔴 BULUNAN VE KAPATILAN BOŞLUK — `ASTRA_Bot` KURULUMU YAZILI DEĞİLDİ
+
+`ASTRA_OrderBook`'un kurulum komutu notlarda vardı (§ satır ~1729).
+**`ASTRA_Bot`'unki HİÇBİR yerde yoktu.** Notlar bu görev hakkında
+defalarca uyarıyordu ("Enable unutma") ama nasıl OLUŞTURULACAĞINI
+yazmıyordu. Sıfırlanan makinede botu 7/24 ayakta tutan tek mekanizma
+kaybolur ve geri kurmanın kaydı yoktu.
+
+➤ **`gorev_kur.ps1`** eklendi. Çalışan görevin dökümünden birebir alındı;
+yolları `$PSScriptRoot`'tan hesaplıyor (depo nereye klonlanırsa orada
+çalışır). Yönetici gerekmez (`RunLevel Limited`).
+
+**Doğrulama:** `-Ad ASTRA_Bot_DENEME -DevreDisi` ile KAPALI bir deneme
+görevi kuruldu, gerçek görevle **12 alan karşılaştırıldı, 12'si aynı**
+(eylem, argüman, çalışma dizini, 2 tetik, 10 dk tekrar, pil ayarları,
+süre sınırı, çoklu çalışma, logon tipi, yetki). Deneme görevi silindi,
+gerçek `ASTRA_Bot` dokunulmadı, bot BAŞLAMADI (main.py bot süreci: 0).
+
+⚠️ **İlk sürüm AYRIŞTIRILAMIYORDU.** Windows PowerShell 5.1, BOM'suz
+`.ps1`'i UTF-8 değil **cp1254** okur. Betikteki `—` (uzun tire) UTF-8'de
+`E2 80 94`; `0x94` cp1254'te **`”` (sağ akıllı tırnak)** — PowerShell
+akıllı tırnakları dize sınırlayıcısı sayıyor. Sonuç:
+```
+satir 55: Unexpected token 'uzerine' in expression or statement.
+satir 98: The string is missing the terminator
+```
+UTF-8 BOM eklendi → ayrıştırma TEMİZ. **Test etmeden commit edilseydi
+tam ihtiyaç anında (sıfırlamadan sonra) bozuk çıkacaktı.**
+➤ DERS: Türkçe karakter/tipografik işaret içeren her `.ps1` BOM'lu
+kaydedilmeli VE `[Parser]::ParseFile` ile denetlenmeli.
+
+### GITHUB'DA OLAN / OLMAYAN
+
+```
+GITHUB'DA (sifirlamadan etkilenmez)
+  kod · 581 test · DEVAM_NOTLARI (tum dergi) · belgeler
+  .env.example · requirements.txt · gorev_kur.ps1
+
+KAYBOLUR AMA YENIDEN URETILIR
+  .env                    8 KB    -> .env.example'dan, anahtarlar yeniden alinir
+  saved_models/         3.9 GB    -> ilk calismada OTOMATIK egitilir (~45 dk)
+  data/model_registry.db 2.4 MB   -> otomatik
+  logs/                 339 MB    -> yeniden birikir
+  zamanlanmis gorev                -> gorev_kur.ps1
+
+KAYBOLUR VE GERI GETIRILEMEZ
+  data/astra.db          11 MB    -> 4 acik paper islem (sayac 4/100)
+  data/journal.db        12 KB    -> 17 canli testnet kaydi
+  data/orderbook/       172 MB    -> 17 dosya; Binance GECMIS DERINLIK VERMEZ
+```
+
+⚠️ Geri getirilemeyen kısım için yedek **GitHub'a DEĞİL** — depo public ve
+veritabanları bakiye/pozisyon içeriyor. USB disk veya kişisel bulut.
+Toplam ~185 MB.
+
+### SIFIRDAN KURULUM — SIRA
+
+```
+1. Python 3.10 kur
+2. git clone https://github.com/lemuxon/astra.git
+3. cd astra && pip install -r requirements.txt
+4. python testleri_calistir.py           -> 581 test gecmeli
+5. copy .env.example .env  ve doldur:
+     BINANCE_API_KEY/SECRET  testnet.binancefuture.com -> yeni anahtar uret
+     BOT_TOKEN               @BotFather /mybots -> @Astrabrooker_bot -> API Token
+                              (REVOKE ETME - mevcut olani kopyala, §0.51)
+     CHAT_ID                 Telegram'da @userinfobot'a yaz -> "Id" degeri
+                              (token'i tarayici adres cubuguna YAZMA -
+                               gecmise duser, K-108'in ayni sinifi)
+                              Sonra kendi botuna bir kez "Start" bas.
+     FUTURES_BASE_URL        BOS birak = testnet (K-106)
+     LIVE_TRADING            false ile basla
+6. (yedek varsa) data/*.db ve data/orderbook/ geri kopyala
+7. powershell -ExecutionPolicy Bypass -File .\gorev_kur.ps1
+8. 2 dk bekle, dogrula:  logs/bot_autostart.log yaziliyor mu
+                         Telegram'a baslangic mesaji geldi mi
+```
+
+⚠️ `.env` olmadan bile bot GÜVENLİ başlar (K-106): testnet, paper mod.
+Sıra karışsa da gerçek paraya bağlanmaz.
+
+⚠️ İlk çalıştırmada 50 coinin modelleri sıfırdan eğitilir (~45 dk); o
+sırada turlar 600 sn tavanını aşar — tek seferlik, normal.
+
+---
+
 ## 0.55 ⏻ SUNUCU KAPATILDI (2026-10-18)
 
 Kullanıcı kararı: *"B"* — sertleştirmek yerine KAPAT. Gerekçe (§0.54):
@@ -7069,7 +7180,7 @@ yazılmalı ya da `tests/test_veri_tutarliligi.py` kullanılmalı).
 
 **Sürüm:** v58 · 76 kök neden düzeltildi (K-12..88) · 476 test / 43 dosya.
 
-🔴 **§0.55 OKU** (PROJE HER YERDE KAPALI: yerel 2 görev Disabled, sunucu poweroff; Contabo iptali kullanıcıda), sonra §0.54 (sunucu güvenliği), sonra §0.52 (proje durduruldu), sonra §0.51 (Telegram kuruldu), §0.50 (K-106/K-107), sonra §0.49 (proje PUBLIC), §0.46 (makine durumu) ve §0.44 (AÇIK SORU: paper 0 / canlı 5)
+🔴 **§0.56 OKU** (BILGISAYAR SIFIRLANDIYSA: adım adım geri kurulum + gorev_kur.ps1), sonra §0.55 (proje her yerde KAPALI), sonra §0.54 (sunucu güvenliği), sonra §0.52 (proje durduruldu), sonra §0.51 (Telegram kuruldu), §0.50 (K-106/K-107), sonra §0.49 (proje PUBLIC), §0.46 (makine durumu) ve §0.44 (AÇIK SORU: paper 0 / canlı 5)
 
 **Bu oturumda (2026-09-13) yapılanlar — K-84..K-88:**
 - K-84 tempo ölçümü 12 kat yanlıştı (açılan işlem sayıyordu,
