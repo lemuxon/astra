@@ -2914,6 +2914,66 @@ sembol `encodeURIComponent` ile kaçırılıyor.
 
 ---
 
+## 0.55 ⏻ SUNUCU KAPATILDI (2026-10-18)
+
+Kullanıcı kararı: *"B"* — sertleştirmek yerine KAPAT. Gerekçe (§0.54):
+sunucu 2026-08-26'dan beri kullanılmıyor, proje yerelde çalışıyor,
+18 günde 296 bin kaba kuvvet denemesi alıyordu.
+
+### KAYBEDİLEN BİR ŞEY YOK (kapatmadan ÖNCE kontrol edildi)
+- Kod GitHub'da.
+- Sunucudaki veri yalnızca 2026-08-25/26 paper verisi. O tarihten beri
+  yapılandırma defalarca değişti (13 sıfırlama) → §5.3'e göre o örneklem
+  ZATEN GEÇERSİZ. Güncel tüm veri yerel makinede.
+
+### ⚠️ İLK DENEME ÇALIŞMADI — "oldu" DENDİ, SUNUCU AYAKTAYDI
+
+Kapatma konsolu açıldı, kullanıcı "oldu" dedi. Dışarıdan ölçüldü:
+```
+22/tcp : ACIK (3/3) · SSH cevap veriyor · ping 3/3
+```
+**`poweroff` hiç çalışmamış.** Kapatma konsolundaki ssh sona ermiş
+(muhtemelen parola kabul edilmedi ya da yanlış pencereye yazıldı —
+ekran görülemediği için kesin değil).
+
+İpucu: yerelde AYRI bir `ssh root@...` süreci (komutsuz, etkileşimli)
+10:18'den beri açıktı — kullanıcının parola değiştirmek için açtığı
+oturum, sunucuda hâlâ root olarak bağlı. Kullanıcı `poweroff`'u
+O pencereye yazdı — parola gerekmedi.
+
+➤ **DERS: "oldu" demek ölçüm değildir.** Dışarıdan doğrulamasaydık
+sunucu açık kalıp saldırı almaya devam edecekti ve kapandığını
+sanacaktık.
+
+### KAPANDI — Dışarıdan doğrulandı
+
+```
+22/tcp : cevap YOK (3/3, 20 sn)
+ping   : %100 kayip
+75 sn sonra tekrar : hala kapali  <- yeniden baslatma DEGIL, gercek kapanma
+```
+
+### KULLANICIDA KALAN
+
+1. **Contabo panelinden İPTAL** (faturalama durur, sunucu silinir).
+   Kapatma tek başına faturalamayı durdurmaz. İptal geri alınamaz.
+2. İsteğe bağlı: sunucunun `.env`'indeki Binance **testnet** API anahtarını
+   yenile. İptalle birlikte silinir; ele geçirilme izi bulunmadı (§0.54),
+   testnet = oyun parası → risk düşük.
+
+⚠️ Sunucu panelden tekrar açılırsa (iptal edilmeden): parola girişi
+HÂLÂ AÇIK ve `50-cloud-init.conf` tuzağı duruyor (§0.54).
+
+### PROJE DURUMU — HER YERDE KAPALI
+
+```
+yerel   : ASTRA_Bot Disabled · ASTRA_OrderBook Disabled · 0 surec
+sunucu  : KAPALI (poweroff, disaridan dogrulandi)
+borsa   : 0 pozisyon, 0 acik emir
+```
+
+---
+
 ## 0.54 🔒 SUNUCU GÜVENLİK DENETİMİ (2026-10-18)
 
 Kullanıcı: *"Yaptıklarımı kontrol eder misin."*
@@ -7009,7 +7069,7 @@ yazılmalı ya da `tests/test_veri_tutarliligi.py` kullanılmalı).
 
 **Sürüm:** v58 · 76 kök neden düzeltildi (K-12..88) · 476 test / 43 dosya.
 
-🔴 **§0.54 OKU** (sunucu: parola DEĞİŞTİ ama giriş hâlâ AÇIK; 18 günde 296 bin kaba kuvvet denemesi; 50-cloud-init.conf tuzağı), sonra §0.52 (proje durduruldu), sonra §0.51 (Telegram kuruldu), §0.50 (K-106/K-107), sonra §0.49 (proje PUBLIC), §0.46 (makine durumu) ve §0.44 (AÇIK SORU: paper 0 / canlı 5)
+🔴 **§0.55 OKU** (PROJE HER YERDE KAPALI: yerel 2 görev Disabled, sunucu poweroff; Contabo iptali kullanıcıda), sonra §0.54 (sunucu güvenliği), sonra §0.52 (proje durduruldu), sonra §0.51 (Telegram kuruldu), §0.50 (K-106/K-107), sonra §0.49 (proje PUBLIC), §0.46 (makine durumu) ve §0.44 (AÇIK SORU: paper 0 / canlı 5)
 
 **Bu oturumda (2026-09-13) yapılanlar — K-84..K-88:**
 - K-84 tempo ölçümü 12 kat yanlıştı (açılan işlem sayıyordu,
